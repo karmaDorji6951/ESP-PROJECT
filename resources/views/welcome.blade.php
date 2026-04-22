@@ -1142,6 +1142,188 @@
                     transition-duration: 1ms !important;
                 }
             }
+
+            /* ====== NOTIFICATIONS ====== */
+            .notifications-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                max-width: 420px;
+                pointer-events: none;
+            }
+
+            .notification {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: var(--radius-md);
+                padding: 16px;
+                box-shadow: var(--shadow-lg);
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                animation: slideInRight 300ms var(--transition-normal) forwards;
+                pointer-events: auto;
+                cursor: pointer;
+                transition: all var(--transition-normal);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .notification::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 4px;
+                background: var(--brand);
+            }
+
+            .notification.success {
+                border-color: var(--success-soft);
+                background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+            }
+
+            .notification.success::before {
+                background: var(--success);
+            }
+
+            .notification.info {
+                border-color: var(--brand-soft);
+                background: linear-gradient(135deg, #ffffff 0%, #f0fdfc 100%);
+            }
+
+            .notification.info::before {
+                background: var(--brand);
+            }
+
+            .notification.warning {
+                border-color: var(--accent-soft);
+                background: linear-gradient(135deg, #ffffff 0%, #fefce8 100%);
+            }
+
+            .notification.warning::before {
+                background: var(--accent);
+            }
+
+            .notification.error {
+                border-color: var(--alert-soft);
+                background: linear-gradient(135deg, #ffffff 0%, #ffe4e6 100%);
+            }
+
+            .notification.error::before {
+                background: var(--alert);
+            }
+
+            .notification-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+
+            .notification-content {
+                flex: 1;
+                overflow: hidden;
+            }
+
+            .notification-title {
+                font-weight: 700;
+                font-size: 0.95rem;
+                color: var(--ink);
+                margin: 0 0 4px;
+                line-height: 1.2;
+            }
+
+            .notification-message {
+                font-size: 0.85rem;
+                color: var(--muted);
+                margin: 0;
+                line-height: 1.4;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            .notification-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--muted-light);
+                font-size: 18px;
+                padding: 0;
+                flex-shrink: 0;
+                transition: color var(--transition-fast);
+                line-height: 1;
+                margin-top: 2px;
+            }
+
+            .notification-close:hover {
+                color: var(--ink);
+            }
+
+            .notification:hover {
+                box-shadow: var(--shadow);
+                border-color: var(--line-light);
+                transform: translateY(-2px);
+            }
+
+            .notification.fade-out {
+                animation: slideOutRight 300ms var(--transition-normal) forwards;
+            }
+
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100%);
+                    pointer-events: none;
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100%);
+                    pointer-events: none;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .notifications-container {
+                    max-width: 100%;
+                    width: calc(100% - 20px);
+                    top: 10px;
+                    right: 10px;
+                    left: 10px;
+                }
+
+                .notification {
+                    padding: 14px;
+                    gap: 10px;
+                }
+
+                .notification-icon {
+                    font-size: 18px;
+                }
+
+                .notification-title {
+                    font-size: 0.9rem;
+                }
+
+                .notification-message {
+                    font-size: 0.8rem;
+                }
+            }
         </style>
     </head>
     <body>
@@ -1210,6 +1392,9 @@
         </nav>
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- NOTIFICATIONS CONTAINER -->
+        <div id="notificationsContainer" class="notifications-container"></div>
 
         <!-- MAIN CONTENT -->
         <div class="main-container">
@@ -1344,6 +1529,7 @@
         </div>
 
         <script>
+            // ====== SIDEBAR TOGGLE ======
             const sidebar = document.getElementById('sidebar');
             const menuToggle = document.getElementById('menuToggle');
             const overlay = document.getElementById('sidebarOverlay');
@@ -1370,6 +1556,141 @@
                 if (window.innerWidth > 768) {
                     sidebar.classList.remove('open');
                 }
+            });
+
+            // ====== NOTIFICATION SYSTEM ======
+            class NotificationManager {
+                constructor() {
+                    this.container = document.getElementById('notificationsContainer');
+                    this.notifications = [];
+                    this.initializeEcho();
+                }
+
+                initializeEcho() {
+                    // Check if Laravel Echo is available
+                    if (typeof window.Echo === 'undefined') {
+                        console.warn('Laravel Echo not initialized. Install it with: npm install laravel-echo');
+                        return;
+                    }
+
+                    // Alternative: Use database polling for development
+                    // Listen for task assignments
+                    this.listenForTaskAssignments();
+                    // Listen for task submissions
+                    this.listenForTaskSubmissions();
+                }
+
+                listenForTaskAssignments() {
+                    // Listen on private channel for current logged-in user
+                    @auth
+                        const userId = {{ Auth::user()->id }};
+                        if (window.Echo) {
+                            try {
+                                window.Echo.private(`user.${userId}`)
+                                    .listen('TaskAssigned', (data) => {
+                                        this.showNotification(
+                                            'New Task Assigned! ✓',
+                                            data.message || `Task: ${data.title}`,
+                                            'success',
+                                            '📋'
+                                        );
+                                    });
+                            } catch (e) {
+                                console.log('Echo listener setup:', e);
+                            }
+                        }
+                    @endauth
+                }
+
+                listenForTaskSubmissions() {
+                    // Listen on private channel for supervisor/manager
+                    @auth
+                        const userId = {{ Auth::user()->id }};
+                        if (window.Echo) {
+                            try {
+                                window.Echo.private(`user.${userId}`)
+                                    .listen('TaskSubmitted', (data) => {
+                                        this.showNotification(
+                                            'Work Submission Received! 📝',
+                                            data.message || `${data.submitted_by} submitted work`,
+                                            'info',
+                                            '📊'
+                                        );
+                                    });
+                            } catch (e) {
+                                console.log('Echo listener setup:', e);
+                            }
+                        }
+                    @endauth
+                }
+
+                showNotification(title, message, type = 'info', icon = 'ℹ️') {
+                    const id = Date.now();
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.id = `notification-${id}`;
+                    notification.innerHTML = `
+                        <div class="notification-icon">${icon}</div>
+                        <div class="notification-content">
+                            <p class="notification-title">${title}</p>
+                            <p class="notification-message">${message}</p>
+                        </div>
+                        <button class="notification-close" aria-label="Close notification">&times;</button>
+                    `;
+
+                    this.container.appendChild(notification);
+                    this.notifications.push(id);
+
+                    // Close button listener
+                    notification.querySelector('.notification-close').addEventListener('click', () => {
+                        this.removeNotification(id);
+                    });
+
+                    // Auto-close after 8 seconds
+                    let timeout = setTimeout(() => {
+                        this.removeNotification(id);
+                    }, 8000);
+
+                    notification.addEventListener('mouseenter', () => {
+                        clearTimeout(timeout);
+                    });
+
+                    notification.addEventListener('mouseleave', () => {
+                        timeout = setTimeout(() => {
+                            this.removeNotification(id);
+                        }, 3000);
+                    });
+                }
+
+                removeNotification(id) {
+                    const element = document.getElementById(`notification-${id}`);
+                    if (element) {
+                        element.classList.add('fade-out');
+                        setTimeout(() => {
+                            if (element.parentNode) {
+                                element.remove();
+                            }
+                            this.notifications = this.notifications.filter(n => n !== id);
+                        }, 300);
+                    }
+                }
+            }
+
+            // Initialize notification manager when DOM is ready
+            document.addEventListener('DOMContentLoaded', () => {
+                window.notificationManager = new NotificationManager();
+
+                // Example: Show a welcome notification
+                @auth
+                    setTimeout(() => {
+                        window.notificationManager.showNotification(
+                            'Welcome back! 👋',
+                            'Real-time notifications will appear here when tasks are assigned or submitted.',
+                            'success',
+                            '🎉'
+                        );
+                    }, 500);
+                @endauth
             });
         </script>
     </body>
