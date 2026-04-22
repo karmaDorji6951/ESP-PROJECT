@@ -14,6 +14,7 @@ Laravel-based Personnel Management System for Elementary Service Personnel.
 ## Features
 
 - Authentication and role-based access
+- **🆕 Role-Based Dashboards**: Unique dashboards for Admin, Supervisor, and Employee roles
 - Dashboard with staff, attendance, task, and leave summaries
 - Employee management with profile photo upload
 - Attendance marking and filtered reports
@@ -28,9 +29,17 @@ Laravel-based Personnel Management System for Elementary Service Personnel.
 
 After seeding, use one of these accounts:
 
-- Admin: admin@esp.local / password
-- Supervisor: supervisor@esp.local / password
-- Staff: staff@esp.local / password
+- **Admin Dashboard**: admin@esp.local / password
+  - System administration and oversight
+  - Manage all staff, tasks, and approvals
+  
+- **Supervisor Dashboard**: supervisor@esp.local / password  
+  - Team and task management
+  - Leave approvals and staff oversight
+  
+- **Employee Dashboard**: staff@esp.local / password
+  - Personal task tracking
+  - Attendance and leave requests
 
 ## Database
 
@@ -50,6 +59,33 @@ The app is configured for a MySQL database named `ESP`.
    - `php artisan db:seed --force`
 6. Create the storage symlink for employee photos:
    - `php artisan storage:link`
+
+## Role-Based Dashboards
+
+The application features customized dashboards for each user role:
+
+### Admin Dashboard
+- System-wide analytics and controls
+- Complete staff and task management
+- Leave request approvals
+- Comprehensive reporting
+- See [admin dashboard docs](ROLE_BASED_DASHBOARDS.md#1-admin-dashboard-system-administration)
+
+### Supervisor Dashboard
+- Team and task oversight
+- Leave approvals for team members
+- Team attendance tracking
+- Performance metrics for assigned tasks
+- See [supervisor dashboard docs](ROLE_BASED_DASHBOARDS.md#2-supervisor-dashboard-team-management)
+
+### Employee Dashboard
+- Personal task management
+- Attendance history
+- Leave request submission and tracking
+- Task deadline tracking with alerts
+- See [employee dashboard docs](ROLE_BASED_DASHBOARDS.md#3-employee-dashboard-personal-workspace)
+
+**Full Documentation**: [ROLE_BASED_DASHBOARDS.md](ROLE_BASED_DASHBOARDS.md)
 
 ## Real-Time Notifications Setup
 
