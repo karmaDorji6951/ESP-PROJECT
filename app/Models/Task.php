@@ -38,4 +38,14 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'assigned_by');
     }
+
+    public function submissions()
+    {
+        return $this->hasMany(TaskSubmission::class);
+    }
+
+    public function latestSubmission()
+    {
+        return $this->hasOne(TaskSubmission::class)->latest();
+    }
 }

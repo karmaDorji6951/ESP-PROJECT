@@ -14,6 +14,7 @@ Laravel-based Personnel Management System for Elementary Service Personnel.
 ## Features
 
 - Authentication and role-based access
+- **🆕 Role-Based Dashboards**: Unique dashboards for Admin, Supervisor, and Employee roles
 - Dashboard with staff, attendance, task, and leave summaries
 - Employee management with profile photo upload
 - Attendance marking and filtered reports
@@ -21,14 +22,24 @@ Laravel-based Personnel Management System for Elementary Service Personnel.
 - Leave application and approval workflow
 - CSV-based report export for attendance and performance summaries
 - Database notifications for leave activity
+- **🆕 Real-Time Notifications**: Instant notifications for task assignments and work submissions
+- **🆕 Broadcasting System**: WebSocket support for live notifications (Redis/Pusher)
 
 ## Default Credentials
 
 After seeding, use one of these accounts:
 
-- Admin: admin@esp.local / password
-- Supervisor: supervisor@esp.local / password
-- Staff: staff@esp.local / password
+- **Admin Dashboard**: admin@esp.local / password
+  - System administration and oversight
+  - Manage all staff, tasks, and approvals
+  
+- **Supervisor Dashboard**: supervisor@esp.local / password  
+  - Team and task management
+  - Leave approvals and staff oversight
+  
+- **Employee Dashboard**: staff@esp.local / password
+  - Personal task tracking
+  - Attendance and leave requests
 
 ## Database
 
@@ -48,6 +59,52 @@ The app is configured for a MySQL database named `ESP`.
    - `php artisan db:seed --force`
 6. Create the storage symlink for employee photos:
    - `php artisan storage:link`
+
+## Role-Based Dashboards
+
+The application features customized dashboards for each user role:
+
+### Admin Dashboard
+- System-wide analytics and controls
+- Complete staff and task management
+- Leave request approvals
+- Comprehensive reporting
+- See [admin dashboard docs](ROLE_BASED_DASHBOARDS.md#1-admin-dashboard-system-administration)
+
+### Supervisor Dashboard
+- Team and task oversight
+- Leave approvals for team members
+- Team attendance tracking
+- Performance metrics for assigned tasks
+- See [supervisor dashboard docs](ROLE_BASED_DASHBOARDS.md#2-supervisor-dashboard-team-management)
+
+### Employee Dashboard
+- Personal task management
+- Attendance history
+- Leave request submission and tracking
+- Task deadline tracking with alerts
+- See [employee dashboard docs](ROLE_BASED_DASHBOARDS.md#3-employee-dashboard-personal-workspace)
+
+**Full Documentation**: [ROLE_BASED_DASHBOARDS.md](ROLE_BASED_DASHBOARDS.md)
+
+## Real-Time Notifications Setup
+
+The app includes a real-time notification system for task assignments and submissions.
+
+**Quick Start:**
+1. Run migrations: `php artisan migrate`
+2. Install Laravel Echo: `npm install laravel-echo pusher-js`
+3. Choose a broadcasting method in `.env`:
+   - `BROADCAST_DRIVER=redis` (development)
+   - `BROADCAST_DRIVER=pusher` (production)
+   - `BROADCAST_DRIVER=log` (polling)
+4. See [NOTIFICATIONS_QUICK_START.md](NOTIFICATIONS_QUICK_START.md) for detailed setup
+
+**Documentation:**
+- [NOTIFICATIONS_QUICK_START.md](NOTIFICATIONS_QUICK_START.md) - 5-minute setup guide
+- [REAL_TIME_NOTIFICATIONS_SETUP.md](REAL_TIME_NOTIFICATIONS_SETUP.md) - Detailed guide
+- [NOTIFICATIONS_CONFIG_REFERENCE.md](NOTIFICATIONS_CONFIG_REFERENCE.md) - Configuration reference
+- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Complete overview
 7. Build frontend assets:
    - `npm run build`
 8. Start the app:

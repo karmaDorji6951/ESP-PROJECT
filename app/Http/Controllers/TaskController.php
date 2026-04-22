@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TaskAssigned;
+use App\Events\TaskSubmitted;
 use App\Models\Employee;
 use App\Models\Task;
+use App\Models\TaskSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+
 
 class TaskController extends Controller
 {
@@ -150,5 +154,79 @@ class TaskController extends Controller
         $slug = $role?->slug ?? str($role?->name)->lower()->toString();
 
         return in_array($slug, ['admin', 'supervisor'], true);
+    }
+
+    /**
+     * Submit a task for review
+     */
+    public function submitTask(Request $request, Task $task)
+    {
+        // Verify the authenticated user is the one assigned the task
+        if ($task->employee_id !== auth()->user()?->employee_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'submission_notes' => ['required', 'string', 'min:10'],
+        ]);
+
+        // Create task submission
+        $submission = TaskSubmission::create([
+            'task_id' => $task->id,
+            'submitted_by' => auth()->id(),
+            'submission_notes' => $validated['submission_notes'],
+            'submission_status' => 'Submitted',
+            'submitted_at' => now(),
+        ]);
+
+        // Load relationships for event broadcasting
+        $submission->load('task.assigner', 'submitter');
+
+        // Dispatch event to notify supervisor
+        TaskSubmitted::dispatch($submission);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Work submitted for evaluation',
+            'submission' => $submission,
+        ]);
+    }
+
+    /**
+     * Check submission status
+     */
+    public function checkSubmissionStatus(Task $task)
+    {
+        $submission = $task->latestSubmission()->first();
+
+        return response()->json([
+            'submitted' => $submission ? true : false,
+            'submission' => $submission,
+        ]);
+    }
+
+    /**
+     * Assign task and trigger real-time notification
+     */
+    public function assignTaskWithNotification(Request $request, Task $task)
+    {
+        abort_unless($this->canManageAssignments(), 403, 'You are not authorized to assign work.');
+
+        // Update task if needed
+        if ($request->filled('status')) {
+            $task->update(['status' => $request->input('status')]);
+        }
+
+        // Load relationships for event broadcasting
+        $task->load('employee:id,name', 'assigner:id,name');
+
+        // Dispatch event to notify employee
+        TaskAssigned::dispatch($task);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task assigned and notification sent',
+            'task' => $task,
+        ]);
     }
 }
