@@ -26,12 +26,23 @@
                 <small class="text-white-50">Elementary Service Personnel</small>
             </div>
             <nav class="d-grid gap-2">
-                <a href="{{ route('dashboard') }}">Dashboard</a>
-                <a href="{{ route('employees.index') }}">Employees</a>
-                <a href="{{ route('attendance.index') }}">Attendance</a>
-                <a href="{{ route('tasks.index') }}">Timetable</a>
-                <a href="{{ route('leaves.index') }}">Leaves</a>
-                <a href="{{ route('reports.index') }}">Reports</a>
+                @php
+                    $role = optional(auth()->user()?->role)->slug;
+                @endphp
+
+                @if($role === 'admin')
+                    <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                    <a href="{{ route('admin.users.index') }}">Users</a>
+                    <a href="{{ route('admin.employees.index') }}">Employees</a>
+                @elseif($role === 'supervisor')
+                    <a href="{{ route('supervisor.dashboard') }}">Dashboard</a>
+                    <a href="{{ route('supervisor.attendance.index') }}">Attendance</a>
+                    <a href="{{ route('supervisor.tasks.index') }}">Tasks</a>
+                @elseif($role === 'staff')
+                    <a href="{{ route('staff.dashboard') }}">Dashboard</a>
+                    <a href="{{ route('staff.tasks.index') }}">My Tasks</a>
+                    <a href="{{ route('staff.leaves.index') }}">Leaves</a>
+                @endif
             </nav>
         </aside>
         <main class="col-lg-10 p-0">
