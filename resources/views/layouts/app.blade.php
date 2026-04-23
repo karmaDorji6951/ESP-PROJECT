@@ -34,15 +34,19 @@
                     <a href="{{ route('admin.dashboard') }}">Dashboard</a>
                     <a href="{{ route('admin.users.index') }}">Users</a>
                     <a href="{{ route('admin.employees.index') }}">Employees</a>
+                    <a href="{{ route('timetables.index') }}" class="{{ request()->routeIs('timetables.*') ? 'active' : '' }}">Timetable</a>
                 @elseif($role === 'supervisor')
                     <a href="{{ route('supervisor.dashboard') }}">Dashboard</a>
                     <a href="{{ route('supervisor.attendance.index') }}">Attendance</a>
                     <a href="{{ route('supervisor.tasks.index') }}">Tasks</a>
+                    <a href="{{ route('timetables.index') }}" class="{{ request()->routeIs('timetables.*') ? 'active' : '' }}">Timetable</a>
                 @elseif($role === 'staff')
                     <a href="{{ route('staff.dashboard') }}">Dashboard</a>
                     <a href="{{ route('staff.tasks.index') }}">My Tasks</a>
                     <a href="{{ route('staff.leaves.index') }}">Leaves</a>
+                    <a href="{{ route('timetables.index') }}" class="{{ request()->routeIs('timetables.*') ? 'active' : '' }}">Timetable</a>
                 @endif
+                <a href="{{ route('profile.show') }}" class="{{ request()->routeIs('profile.*') ? 'active' : '' }}">Profile</a>
             </nav>
         </aside>
         <main class="col-lg-10 p-0">

@@ -10,6 +10,8 @@ use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\LeaveController as StaffLeaveController;
 use App\Http\Controllers\Staff\TaskController as StaffTaskController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\TimetableController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Landing Page - Redirect to login or dashboard
@@ -57,6 +59,15 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::resource('tasks', StaffTaskController::class)->only(['index', 'show']);
     Route::resource('leaves', StaffLeaveController::class);
 });
+
+// Timetable Routes - Shared across all roles with role-based permissions
+Route::middleware(['auth'])->get('/timetables/day-details', [TimetableController::class, 'dayDetails'])->name('timetables.day-details');
+Route::middleware(['auth'])->resource('timetables', TimetableController::class);
+
+// Profile Routes - Available to all authenticated users
+Route::middleware(['auth'])->get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+Route::middleware(['auth'])->get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::middleware(['auth'])->put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
 // Fallback dashboard route
 Route::middleware('auth')->get('/dashboard', function () {

@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\Role;
 use App\Models\Task;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -97,6 +98,119 @@ class DatabaseSeeder extends Seeder
             'end_date' => today()->addDays(6)->toDateString(),
             'reason' => 'Family emergency',
             'status' => 'Pending',
+        ]);
+
+        // Add sample timetable entries for Elementary Service Personnel
+        Timetable::updateOrCreate([
+            'title' => 'Classroom Cleaning - Block A',
+            'date' => today()->toDateString(),
+        ], [
+            'description' => 'Daily cleaning and sanitization of all classrooms in Block A including floors, desks, and windows',
+            'start_time' => '06:00',
+            'end_time' => '08:00',
+            'location' => 'Block A Classrooms',
+            'priority' => 'high',
+            'status' => 'scheduled',
+            'employee_id' => $employees[0]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'School Gate Security Duty',
+            'date' => today()->toDateString(),
+        ], [
+            'description' => 'Monitor main school gate, check visitor passes, ensure student safety during entry/exit times',
+            'start_time' => '07:30',
+            'end_time' => '09:30',
+            'location' => 'Main School Gate',
+            'priority' => 'high',
+            'status' => 'scheduled',
+            'employee_id' => $employees[1]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Playground Maintenance',
+            'date' => today()->toDateString(),
+        ], [
+            'description' => 'Clean playground area, check equipment safety, remove debris, ensure safe play environment',
+            'start_time' => '10:00',
+            'end_time' => '12:00',
+            'location' => 'School Playground',
+            'priority' => 'medium',
+            'status' => 'scheduled',
+            'employee_id' => $employees[2]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Lunch Hall Cleaning',
+            'date' => today()->toDateString(),
+        ], [
+            'description' => 'Clean and sanitize lunch hall before and after lunch service, clean tables, floors, and serving areas',
+            'start_time' => '11:30',
+            'end_time' => '14:00',
+            'location' => 'School Lunch Hall',
+            'priority' => 'high',
+            'status' => 'scheduled',
+            'assigned_to_role' => 'staff',
+            'assigned_by' => $admin->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Waste Collection & Disposal',
+            'date' => today()->addDays(1)->toDateString(),
+        ], [
+            'description' => 'Collect waste from all school areas, sort recyclables, dispose of garbage properly',
+            'start_time' => '15:00',
+            'end_time' => '16:30',
+            'location' => 'Entire School Campus',
+            'priority' => 'medium',
+            'status' => 'scheduled',
+            'employee_id' => $employees[0]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Restroom Cleaning & Sanitization',
+            'date' => today()->addDays(1)->toDateString(),
+        ], [
+            'description' => 'Thorough cleaning and sanitization of all student and staff restrooms, refill supplies',
+            'start_time' => '13:00',
+            'end_time' => '15:00',
+            'location' => 'All School Restrooms',
+            'priority' => 'high',
+            'status' => 'scheduled',
+            'employee_id' => $employees[1]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Library & Study Area Maintenance',
+            'date' => today()->addDays(2)->toDateString(),
+        ], [
+            'description' => 'Dust library shelves, clean study tables, organize reading areas, ensure cleanliness',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'location' => 'School Library',
+            'priority' => 'low',
+            'status' => 'scheduled',
+            'employee_id' => $employees[2]->id,
+            'assigned_by' => $supervisor->id,
+        ]);
+
+        Timetable::updateOrCreate([
+            'title' => 'Weekly ESP Team Meeting',
+            'date' => today()->addDays(3)->toDateString(),
+        ], [
+            'description' => 'Weekly coordination meeting for all Elementary Service Personnel to discuss schedules and issues',
+            'start_time' => '16:00',
+            'end_time' => '17:00',
+            'location' => 'ESP Staff Room',
+            'priority' => 'medium',
+            'status' => 'scheduled',
+            'assigned_to_role' => 'staff',
+            'assigned_by' => $admin->id,
         ]);
     }
 }

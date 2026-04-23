@@ -170,7 +170,7 @@
 
         /* Main Content */
         .supervisor-main {
-            margin-left: 280px;
+            margin-left: 0;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -247,33 +247,12 @@
 
         /* Mobile Responsive */
         @media (max-width: 1200px) {
-            .supervisor-sidebar {
-                width: 240px;
-            }
-
-            .supervisor-main {
-                margin-left: 240px;
-            }
-
             .supervisor-content {
                 padding: 16px;
             }
         }
 
         @media (max-width: 768px) {
-            .supervisor-sidebar {
-                width: 280px;
-                position: fixed;
-                left: 0;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                z-index: 1000;
-            }
-
-            .supervisor-sidebar.active {
-                transform: translateX(0);
-            }
-
             .supervisor-main {
                 margin-left: 0;
             }
@@ -297,49 +276,7 @@
 </head>
 <body>
     <div class="supervisor-container">
-        <!-- Sidebar -->
-        <div class="supervisor-sidebar" id="supervisorSidebar">
-            <div class="sidebar-header">
-                <div class="logo-section">
-                    <div class="logo">📋</div>
-                    <span class="app-name">ESP Manager</span>
-                </div>
-            </div>
-
-            <nav class="sidebar-menu supervisor-menu">
-                <a href="{{ route('dashboard') }}" class="menu-item @if(Route::currentRouteName() === 'dashboard') active @endif">
-                    <span class="menu-icon">📊</span>
-                    <span class="menu-label">Dashboard</span>
-                </a>
-                <a href="{{ route('supervisor.tasks.index') }}" class="menu-item @if(strpos(Route::currentRouteName(), 'supervisor.tasks') === 0) active @endif">
-                    <span class="menu-icon">✓</span>
-                    <span class="menu-label">My Tasks</span>
-                </a>
-                <a href="#attendance" class="menu-item">
-                    <span class="menu-icon">📅</span>
-                    <span class="menu-label">Attendance</span>
-                </a>
-                <a href="#leaves" class="menu-item">
-                    <span class="menu-icon">🏖️</span>
-                    <span class="menu-label">Leave Reviews</span>
-                </a>
-                <a href="#staff" class="menu-item">
-                    <span class="menu-icon">👥</span>
-                    <span class="menu-label">Staff Directory</span>
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                    <div class="user-info">
-                        <div class="user-name">{{ auth()->user()->name }}</div>
-                        <div class="user-role">Supervisor</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        
         <!-- Main Content -->
         <div class="supervisor-main">
             <div class="supervisor-topbar">
@@ -360,34 +297,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('supervisorSidebar');
-
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('active');
-                });
-
-                document.querySelectorAll('.menu-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        if (window.innerWidth <= 768) {
-                            sidebar.classList.remove('active');
-                        }
-                    });
-                });
-
-                document.addEventListener('click', function(event) {
-                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                        if (window.innerWidth <= 768) {
-                            sidebar.classList.remove('active');
-                        }
-                    }
-                });
-            }
-        });
-    </script>
-    @stack('scripts')
+        @stack('scripts')
 </body>
 </html>
