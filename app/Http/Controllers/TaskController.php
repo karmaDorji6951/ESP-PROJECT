@@ -7,6 +7,7 @@ use App\Events\TaskSubmitted;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskSubmission;
+use App\Models\Timetable;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -75,7 +76,21 @@ class TaskController extends Controller
             'assigned_by' => auth()->id(),
         ];
 
-        Task::create($data);
+        $task = Task::create($data);
+
+        // Create timetable entry for the task
+        Timetable::create([
+            'title' => $task->title,
+            'description' => $task->description,
+            'date' => $task->schedule_start_date,
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'status' => 'scheduled',
+            'priority' => 'medium',
+            'employee_id' => $task->employee_id,
+            'assigned_by' => auth()->id(),
+            'task_id' => $task->id,
+        ]);
 
         return redirect()->route('tasks.index')->with('success', 'Timetable work assigned successfully.');
     }
@@ -105,12 +120,27 @@ class TaskController extends Controller
 
         $task->update($data);
 
+        // Update timetable entry if it exists
+        if ($task->timetable) {
+            $task->timetable->update([
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'date' => $data['schedule_start_date'],
+                'status' => strtolower($data['status']) === 'in progress' ? 'in_progress' : (strtolower($data['status']) === 'completed' ? 'completed' : 'scheduled'),
+            ]);
+        }
+
         return redirect()->route('tasks.index')->with('success', 'Timetable assignment updated successfully.');
     }
 
     public function destroy(Task $task)
     {
         abort_unless($this->canManageAssignments(), 403, 'You are not authorized to delete assignments.');
+
+        // Delete associated timetable entry
+        if ($task->timetable) {
+            $task->timetable->delete();
+        }
 
         $task->delete();
 

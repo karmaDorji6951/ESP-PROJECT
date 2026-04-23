@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\Timetable;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -87,10 +88,28 @@ class TimetableController extends Controller
 
         $validated['assigned_by'] = Auth::id();
 
-        Timetable::create($validated);
+        $timetable = Timetable::create($validated);
 
-        return redirect()->route('timetables.index')
-            ->with('success', 'Timetable entry created successfully.');
+        // Create corresponding task if employee is assigned
+        if (!empty($validated['employee_id'])) {
+            $task = Task::create([
+                'employee_id' => $validated['employee_id'],
+                'assigned_by' => Auth::id(),
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'schedule_start_date' => $validated['date'],
+                'schedule_end_date' => $validated['date'],
+                'status' => 'Pending',
+            ]);
+
+            // Link task to timetable
+            $timetable->update(['task_id' => $task->id]);
+        }
+
+        return redirect()->route('timetables.index', [
+            'date' => $validated['date'],
+            'view' => 'day'
+        ])->with('success', 'Timetable entry created successfully.');
     }
 
     /**
@@ -142,6 +161,37 @@ class TimetableController extends Controller
 
         $timetable->update($validated);
 
+        // Sync task if it exists
+        if ($timetable->task) {
+            $taskStatus = match($validated['status']) {
+                'completed' => 'Completed',
+                'in_progress' => 'In Progress',
+                default => 'Pending',
+            };
+
+            $timetable->task->update([
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'schedule_start_date' => $validated['date'],
+                'schedule_end_date' => $validated['date'],
+                'status' => $taskStatus,
+                'employee_id' => $validated['employee_id'],
+            ]);
+        } elseif (!empty($validated['employee_id'])) {
+            // If no task exists but employee is assigned, create one
+            $task = Task::create([
+                'employee_id' => $validated['employee_id'],
+                'assigned_by' => Auth::id(),
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'schedule_start_date' => $validated['date'],
+                'schedule_end_date' => $validated['date'],
+                'status' => 'Pending',
+            ]);
+
+            $timetable->update(['task_id' => $task->id]);
+        }
+
         return redirect()->route('timetables.index')
             ->with('success', 'Timetable entry updated successfully.');
     }
@@ -152,6 +202,11 @@ class TimetableController extends Controller
     public function destroy(Timetable $timetable)
     {
         $this->authorizeEdit($timetable);
+
+        // Delete associated task if it exists
+        if ($timetable->task) {
+            $timetable->task->delete();
+        }
 
         $timetable->delete();
 

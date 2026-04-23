@@ -49,7 +49,20 @@ class ProfileController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo_path && \Storage::exists($user->photo_path)) {
+                \Storage::delete($user->photo_path);
+            }
+
+            // Store new photo
+            $photoPath = $request->file('photo')->store('profiles', 'public');
+            $validated['photo_path'] = $photoPath;
+        }
 
         $user->update($validated);
 

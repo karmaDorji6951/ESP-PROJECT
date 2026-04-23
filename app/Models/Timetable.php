@@ -21,6 +21,7 @@ class Timetable extends Model
         'employee_id',
         'assigned_by',
         'assigned_to_role',
+        'task_id',
     ];
 
     protected $casts = [
@@ -37,6 +38,11 @@ class Timetable extends Model
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
     }
 
     public function scopeForUser($query, $user)

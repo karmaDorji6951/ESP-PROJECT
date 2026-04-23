@@ -1,7 +1,7 @@
-@extends('layouts.supervisor')
+@extends('layouts.app')
 
 @section('page_title', 'My Tasks')
-@section('topbar_title', 'My Assigned Tasks')
+@section('title', 'My Assigned Tasks')
 
 @section('content')
 <!-- Header with Create Button -->

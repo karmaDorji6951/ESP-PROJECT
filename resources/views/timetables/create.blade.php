@@ -117,7 +117,7 @@
             </div>
 
             <div class="form-actions">
-                <a href="{{ route('timetables.index') }}" class="btn btn-secondary">Cancel</a>
+                <a href="{{ route('timetables.index', ['date' => request('date'), 'view' => 'day']) }}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Create Schedule</button>
             </div>
         </form>

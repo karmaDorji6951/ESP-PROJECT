@@ -1,15 +1,41 @@
 @if($dayTimetables->isEmpty())
     <div class="no-tasks-day">
-        <div class="no-tasks-icon">ð</div>
+        <div class="no-tasks-icon">📅</div>
         <div class="no-tasks-title">No tasks scheduled</div>
         <div class="no-tasks-description">No timetable entries found for this date</div>
+        
+        <!-- Add Task Button -->
+        <div style="margin-top: 30px;">
+            @if($canCreate)
+                <a href="{{ route('timetables.create') }}?date={{ $date }}" 
+                   onmouseover="this.style.backgroundColor='#0e919e'; this.style.boxShadow='0 8px 20px rgba(6, 182, 212, 0.4)';"
+                   onmouseout="this.style.backgroundColor='#06b6d4'; this.style.boxShadow='0 4px 12px rgba(6, 182, 212, 0.3)';"
+                   style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #0e919e 100%); color: white; padding: 14px 32px; font-size: 16px; font-weight: 700; border-radius: 8px; text-decoration: none; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+                    ✨ Add Task
+                </a>
+            @else
+                <div style="display: inline-block; background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); color: white; padding: 14px 32px; font-size: 16px; font-weight: 700; border-radius: 8px; opacity: 0.7; cursor: not-allowed;">
+                    ✨ Add Task (Supervisor Only)
+                </div>
+                <div style="display: block; margin-top: 15px; color: #0369a1; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); padding: 14px 16px; border-radius: 8px; font-size: 14px; border-left: 4px solid #06b6d4; font-weight: 500;">
+                    ℹ️ You can only view tasks. Contact your supervisor to create new tasks.
+                </div>
+            @endif
+        </div>
+    </div>
+@else
+    <div class="day-details-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px 16px; background-color: var(--bg-secondary); border-radius: 8px;">
+        <div>
+            <h5 style="margin: 0; font-size: 16px; font-weight: 600;">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</h5>
+            <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px;">{{ $dayTimetables->count() }} task{{ $dayTimetables->count() !== 1 ? 's' : '' }} scheduled</p>
+        </div>
         @if($canCreate)
             <a href="{{ route('timetables.create') }}?date={{ $date }}" class="btn btn-primary btn-sm">
-                + Add Task for This Day
+                + Add Task
             </a>
         @endif
     </div>
-@else
+
     <div class="day-timeline">
         @foreach($dayTimetables as $timetable)
             <div class="timeline-event">
@@ -90,21 +116,41 @@
     padding: 40px 20px;
 }
 
-.no-tasks-icon {
+.no-tasks-day .no-tasks-icon {
     font-size: 48px;
     margin-bottom: 16px;
 }
 
-.no-tasks-title {
+.no-tasks-day .no-tasks-title {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 8px;
 }
 
-.no-tasks-description {
+.no-tasks-day .no-tasks-description {
     color: var(--text-muted);
     margin-bottom: 20px;
+}
+
+.no-tasks-day .btn {
+    margin-top: 8px;
+    font-weight: 500;
+    padding: 10px 24px;
+    font-size: 15px;
+    display: inline-block;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.no-tasks-day .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.no-tasks-day .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .day-timeline {
@@ -117,18 +163,28 @@
     display: flex;
     gap: 16px;
     padding: 16px;
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    border-left: 4px solid var(--supervisor-accent);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 12px;
+    border-left: 5px solid var(--supervisor-accent);
+    border: 1px solid #e0f2fe;
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.1);
+    transition: all 0.3s ease;
+}
+
+.timeline-event:hover {
+    box-shadow: 0 8px 16px rgba(6, 182, 212, 0.15);
+    transform: translateX(4px);
 }
 
 .event-time-block {
     min-width: 120px;
     text-align: center;
     padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+    border-radius: 8px;
+    border: 1px solid #7dd3fc;
+    font-weight: 600;
+    color: #0369a1;
 }
 
 .time-range {
@@ -168,46 +224,47 @@
 }
 
 .priority-badge, .status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .priority-high {
-    background-color: #fef2f2;
-    color: #991b1b;
+    background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+    color: #b91c1c;
 }
 
 .priority-medium {
-    background-color: #fffbeb;
-    color: #92400e;
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    color: #b45309;
 }
 
 .priority-low {
-    background-color: #f0fdf4;
-    color: #166534;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #15803d;
 }
 
 .status-scheduled {
-    background-color: #eff6ff;
-    color: #1e40af;
+    background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+    color: #0369a1;
 }
 
 .status-in_progress {
-    background-color: #fffbeb;
-    color: #92400e;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #4338ca;
 }
 
 .status-completed {
-    background-color: #f0fdf4;
-    color: #166534;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #15803d;
 }
 
 .status-cancelled {
-    background-color: #fef2f2;
-    color: #991b1b;
+    background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+    color: #b91c1c;
 }
 
 .event-description {

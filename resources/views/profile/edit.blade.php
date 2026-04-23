@@ -10,11 +10,59 @@
         <p>Update your personal information and account settings</p>
     </div>
 
-    <form action="{{ route('profile.update') }}" method="POST" class="profile-form">
+    <form action="{{ route('profile.update') }}" method="POST" class="profile-form" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
         <div class="form-sections">
+            <!-- Photo Upload Section -->
+            <div class="form-section">
+                <h3>Profile Photo</h3>
+                <div class="photo-upload-container" style="display: flex; align-items: flex-start; gap: 30px;">
+                    <!-- Current Photo Preview -->
+                    <div style="flex: 0 0 150px;">
+                        <div style="width: 150px; height: 150px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); display: flex; align-items: center; justify-content: center; border: 2px solid #06b6d4; margin-bottom: 12px;">
+                            @if($user->photo_path)
+                                <img src="{{ asset('storage/' . $user->photo_path) }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            @else
+                                <div style="text-align: center; color: #0369a1;">
+                                    <div style="font-size: 48px; font-weight: bold;">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
+                                    <small style="font-size: 12px;">No photo</small>
+                                </div>
+                            @endif
+                        </div>
+                        @if($user->photo_path)
+                            <small style="color: #666;">Current photo</small>
+                        @endif
+                    </div>
+
+                    <!-- Upload Input -->
+                    <div style="flex: 1;">
+                        <div class="form-group">
+                            <label for="photo" style="font-weight: 600; margin-bottom: 8px; display: block;">Upload New Photo</label>
+                            <div style="position: relative; border: 2px dashed #06b6d4; border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%);" 
+                                 onmouseover="this.style.borderColor='#0369a1'; this.style.background='linear-gradient(135deg, #e0f2fe 0%, #a5f3fc 20%)';"
+                                 onmouseout="this.style.borderColor='#06b6d4'; this.style.background='linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';">
+                                <input type="file" id="photo" name="photo" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
+                                <div style="pointer-events: none;">
+                                    <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+                                    <p style="margin: 0; color: #0369a1; font-weight: 600;">Click to upload or drag & drop</p>
+                                    <small style="color: #06b6d4;">PNG, JPG, GIF up to 2MB</small>
+                                </div>
+                            </div>
+                            @error('photo')
+                                <div style="color: #dc2626; font-size: 13px; margin-top: 8px;">{{ $message }}</div>
+                            @enderror
+                            
+                            <!-- File name display -->
+                            <div id="fileName" style="margin-top: 12px; padding: 8px 12px; background: #f8fafc; border-radius: 6px; color: #475569; font-size: 13px; display: none;">
+                                Selected: <strong id="fileNameText"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Personal Information -->
             <div class="form-section">
                 <h3>Personal Information</h3>
@@ -344,4 +392,62 @@ textarea.form-control {
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const photoInput = document.getElementById('photo');
+    const fileNameDisplay = document.getElementById('fileName');
+    const fileNameText = document.getElementById('fileNameText');
+    const uploadContainer = photoInput.parentElement.parentElement.parentElement;
+
+    // Handle file selection
+    photoInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            fileNameText.textContent = file.name;
+            fileNameDisplay.style.display = 'block';
+            
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = uploadContainer.querySelector('[style*="height: 150px"]');
+                if (preview) {
+                    const img = preview.querySelector('img');
+                    if (img) {
+                        img.src = event.target.result;
+                    } else {
+                        preview.innerHTML = '<img src="' + event.target.result + '" style="width: 100%; height: 100%; object-fit: cover;">';
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle drag and drop
+    uploadContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#0369a1';
+        this.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #a5f3fc 20%)';
+    });
+
+    uploadContainer.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#06b6d4';
+        this.style.background = 'linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';
+    });
+
+    uploadContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#06b6d4';
+        this.style.background = 'linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';
+        
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            photoInput.files = e.dataTransfer.files;
+            const event = new Event('change', { bubbles: true });
+            photoInput.dispatchEvent(event);
+        }
+    });
+});
+</script>
 @endpush
