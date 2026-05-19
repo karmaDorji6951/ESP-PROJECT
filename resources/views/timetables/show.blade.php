@@ -139,6 +139,20 @@
 @push('styles')
 <style>
 .timetable-show-container {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f1e8;
+    --border-color: #d4c4a8;
+    --text-primary: #2c3e50;
+    --text-secondary: #4f6472;
+    --text-muted: #7a6a5a;
+    --supervisor-accent: #2c3e50;
+    --supervisor-dark: #1a252f;
+    --success: #5a8a7a;
+    --warning: #d4c4a8;
+    --danger: #a85a5a;
+}
+
+.timetable-show-container {
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -229,6 +243,7 @@
     border-radius: 8px;
     border: 1px solid var(--border-color);
     padding: 20px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.05);
 }
 
 .detail-section h3 {
@@ -281,6 +296,7 @@
     border-radius: 8px;
     border: 1px solid var(--border-color);
     padding: 20px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.05);
 }
 
 .sidebar-card h3 {

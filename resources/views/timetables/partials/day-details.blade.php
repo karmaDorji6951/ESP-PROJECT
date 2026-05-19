@@ -68,27 +68,27 @@
                     <div class="event-details">
                         @if($timetable->location)
                             <div class="detail-item">
-                                <span class="detail-icon">ð</span>
+                                <span class="detail-icon"><i class="bi bi-geo-alt"></i></span>
                                 <span>{{ $timetable->location }}</span>
                             </div>
                         @endif
                         
                         @if($timetable->employee)
                             <div class="detail-item">
-                                <span class="detail-icon">ð</span>
+                                <span class="detail-icon"><i class="bi bi-person"></i></span>
                                 <span>{{ $timetable->employee->name }}</span>
                             </div>
                         @endif
                         
                         @if($timetable->assigned_to_role)
                             <div class="detail-item">
-                                <span class="detail-icon">ð</span>
+                                <span class="detail-icon"><i class="bi bi-people"></i></span>
                                 <span>{{ ucfirst($timetable->assigned_to_role) }}</span>
                             </div>
                         @endif
                         
                         <div class="detail-item">
-                            <span class="detail-icon">ð</span>
+                            <span class="detail-icon"><i class="bi bi-person-check"></i></span>
                             <span>By {{ $timetable->assignedBy->name }}</span>
                         </div>
                     </div>

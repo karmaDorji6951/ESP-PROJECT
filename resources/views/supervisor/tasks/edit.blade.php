@@ -4,11 +4,29 @@
 @section('title', 'Edit Task')
 
 @section('content')
-<div class="card card-soft">
-    <div class="card-body">
-        <form action="{{ route('supervisor.tasks.update', $task) }}" method="POST" class="row g-3">
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-soft">
+            <div class="card-body p-4">
+        <form action="{{ route('supervisor.tasks.update', $task) }}" method="POST" class="row g-4">
             @csrf
             @method('PUT')
+
+            <!-- Department Selection -->
+            <div class="col-12">
+                <label for="department" class="form-label">Select Department {{ ($departments ?? collect())->isNotEmpty() ? '*' : '' }}</label>
+                <select name="department" id="department" class="form-select @error('department') is-invalid @enderror" {{ ($departments ?? collect())->isNotEmpty() ? 'required' : '' }}>
+                    <option value="">-- Choose a department --</option>
+                    @foreach(($departments ?? collect()) as $department)
+                        <option value="{{ $department }}" {{ old('department', $task->employee->department ?? '') === $department ? 'selected' : '' }}>
+                            {{ $department }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('department')
+                <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
 
             <!-- Employee Selection -->
             <div class="col-12">
@@ -16,8 +34,8 @@
                 <select name="employee_id" id="employee_id" class="form-select @error('employee_id') is-invalid @enderror" required>
                     <option value="">-- Choose an employee --</option>
                     @foreach($employees as $employee)
-                    <option value="{{ $employee->id }}" {{ old('employee_id', $task->employee_id) == $employee->id ? 'selected' : '' }}>
-                        {{ $employee->first_name }} {{ $employee->last_name }} (ID: {{ $employee->id }})
+                    <option value="{{ $employee->id }}" data-department="{{ $employee->department }}" {{ old('employee_id', $task->employee_id) == $employee->id ? 'selected' : '' }}>
+                        {{ $employee->name }} ({{ $employee->department }})
                     </option>
                     @endforeach
                 </select>
@@ -69,11 +87,50 @@
                 @enderror
             </div>
 
-            <div class="col-12">
+            <div class="col-12 d-flex gap-2 flex-wrap">
                 <button type="submit" class="btn btn-primary">Update Task</button>
                 <a href="{{ route('supervisor.tasks.index') }}" class="btn btn-light">Cancel</a>
             </div>
         </form>
     </div>
 </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const departmentSelect = document.getElementById('department');
+    const employeeSelect = document.getElementById('employee_id');
+
+    if (!departmentSelect || !employeeSelect) {
+        return;
+    }
+
+    const applyEmployeeFilter = () => {
+        const selectedDepartment = departmentSelect.value;
+
+        Array.from(employeeSelect.options).forEach((option, index) => {
+            if (index === 0) {
+                return; // placeholder
+            }
+
+            const optionDepartment = option.dataset.department || '';
+            const shouldShow = !selectedDepartment || optionDepartment === selectedDepartment;
+
+            option.hidden = !shouldShow;
+            option.disabled = !shouldShow;
+        });
+
+        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+        if (selectedOption && (selectedOption.hidden || selectedOption.disabled)) {
+            employeeSelect.value = '';
+        }
+    };
+
+    departmentSelect.addEventListener('change', applyEmployeeFilter);
+    applyEmployeeFilter();
+});
+</script>
+@endpush

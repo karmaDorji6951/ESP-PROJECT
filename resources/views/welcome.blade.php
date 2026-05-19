@@ -1148,7 +1148,7 @@
                                         );
                                     });
                             } catch (e) {
-                                console.log('Echo listener setup:', e);
+                                console.warn('Echo listener setup failed:', e);
                             }
                         }
                     @endauth
@@ -1170,7 +1170,7 @@
                                         );
                                     });
                             } catch (e) {
-                                console.log('Echo listener setup:', e);
+                                console.warn('Echo listener setup failed:', e);
                             }
                         }
                     @endauth

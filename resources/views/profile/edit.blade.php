@@ -20,47 +20,41 @@
                 <h3>Profile Photo</h3>
                 <div class="photo-upload-container" style="display: flex; align-items: flex-start; gap: 30px;">
                     <!-- Current Photo Preview -->
-                    <div style="flex: 0 0 150px;">
-                        <div style="width: 150px; height: 150px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); display: flex; align-items: center; justify-content: center; border: 2px solid #06b6d4; margin-bottom: 12px;">
+                    <div style="flex: 0 0 200px;">
+                        <div style="width: 200px; height: 200px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #06b6d4; margin-bottom: 12px; position: relative; cursor: pointer; transition: all 0.3s ease;" 
+                             onmouseover="this.style.borderColor='#0369a1'; this.style.transform='scale(1.02)';"
+                             onmouseout="this.style.borderColor='#06b6d4'; this.style.transform='scale(1)';"
+                             onclick="document.getElementById('photo').click();">
                             @if($user->photo_path)
                                 <img src="{{ asset('storage/' . $user->photo_path) }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white;">
+                                    📷
+                                </div>
                             @else
                                 <div style="text-align: center; color: #0369a1;">
-                                    <div style="font-size: 48px; font-weight: bold;">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
-                                    <small style="font-size: 12px;">No photo</small>
+                                    <div style="font-size: 64px; font-weight: bold;">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
+                                    <small style="font-size: 14px;">No photo</small>
+                                </div>
+                                <div style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white;">
+                                    ➕
                                 </div>
                             @endif
                         </div>
                         @if($user->photo_path)
-                            <small style="color: #666;">Current photo</small>
+                            <small style="color: #666; font-weight: 500;">Current photo (click to change)</small>
+                        @else
+                            <small style="color: #666; font-weight: 500;">Click to add photo</small>
                         @endif
                     </div>
-
-                    <!-- Upload Input -->
-                    <div style="flex: 1;">
-                        <div class="form-group">
-                            <label for="photo" style="font-weight: 600; margin-bottom: 8px; display: block;">Upload New Photo</label>
-                            <div style="position: relative; border: 2px dashed #06b6d4; border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%);" 
-                                 onmouseover="this.style.borderColor='#0369a1'; this.style.background='linear-gradient(135deg, #e0f2fe 0%, #a5f3fc 20%)';"
-                                 onmouseout="this.style.borderColor='#06b6d4'; this.style.background='linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';">
-                                <input type="file" id="photo" name="photo" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
-                                <div style="pointer-events: none;">
-                                    <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
-                                    <p style="margin: 0; color: #0369a1; font-weight: 600;">Click to upload or drag & drop</p>
-                                    <small style="color: #06b6d4;">PNG, JPG, GIF up to 2MB</small>
-                                </div>
-                            </div>
-                            @error('photo')
-                                <div style="color: #dc2626; font-size: 13px; margin-top: 8px;">{{ $message }}</div>
-                            @enderror
-                            
-                            <!-- File name display -->
-                            <div id="fileName" style="margin-top: 12px; padding: 8px 12px; background: #f8fafc; border-radius: 6px; color: #475569; font-size: 13px; display: none;">
-                                Selected: <strong id="fileNameText"></strong>
-                            </div>
-                        </div>
-                    </div>
+                    
+                    <!-- Hidden file input for photo upload -->
+                    <input type="file" id="photo" name="photo" accept="image/*" style="display: none;">
+                    
+                    @error('photo')
+                        <div style="color: #dc2626; font-size: 13px; margin-top: 8px;">{{ $message }}</div>
+                    @enderror
                 </div>
+            </div>
             </div>
 
             <!-- Personal Information -->
@@ -85,26 +79,30 @@
                         @enderror
                     </div>
 
-                    @if($user->employee)
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" value="{{ old('phone', $user->employee->phone) }}" 
-                                   class="form-control @error('phone') is-invalid @enderror" placeholder="+1 (555) 123-4567">
-                            @error('phone')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" value="{{ old('phone', $user->employee->phone ?? $user->phone) }}" 
+                               class="form-control @error('phone') is-invalid @enderror" placeholder="e.g., 17654321">
+                        @error('phone')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <textarea id="address" name="address" rows="3" 
-                                      class="form-control @error('address') is-invalid @enderror" 
-                                      placeholder="123 Main St, City, State 12345">{{ old('address', $user->employee->address) }}</textarea>
-                            @error('address')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    @endif
+                    <div class="form-group">
+                        <label for="address">Dzongkhag</label>
+                        <select id="address" name="address"
+                                class="form-control @error('address') is-invalid @enderror">
+                            <option value="">-- Select Dzongkhag --</option>
+                            @foreach(($dzongkhags ?? []) as $dzongkhag)
+                                <option value="{{ $dzongkhag->name }}" {{ old('address', $user->employee->address ?? $user->address) === $dzongkhag->name ? 'selected' : '' }}>
+                                    {{ $dzongkhag->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('address')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
@@ -162,7 +160,7 @@
         <div class="form-actions">
             <a href="{{ route('profile.show') }}" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">
-                <span class="btn-icon">â</span>
+                <span class="btn-icon"><i class="bi bi-check2"></i></span>
                 Save Changes
             </button>
         </div>
@@ -218,8 +216,8 @@
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 20px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--supervisor-accent);
+    padding-bottom: 14px;
+    border-bottom: 3px solid var(--supervisor-accent);
 }
 
 .form-grid {
@@ -396,56 +394,24 @@ textarea.form-control {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('photo');
-    const fileNameDisplay = document.getElementById('fileName');
-    const fileNameText = document.getElementById('fileNameText');
-    const uploadContainer = photoInput.parentElement.parentElement.parentElement;
+    const profilePhotoContainer = document.querySelector('[onclick*="photo.click()"]');
 
     // Handle file selection
     photoInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
             const file = this.files[0];
-            fileNameText.textContent = file.name;
-            fileNameDisplay.style.display = 'block';
             
             // Show image preview
             const reader = new FileReader();
             reader.onload = function(event) {
-                const preview = uploadContainer.querySelector('[style*="height: 150px"]');
-                if (preview) {
-                    const img = preview.querySelector('img');
-                    if (img) {
-                        img.src = event.target.result;
-                    } else {
-                        preview.innerHTML = '<img src="' + event.target.result + '" style="width: 100%; height: 100%; object-fit: cover;">';
-                    }
+                // Update profile photo container
+                if (profilePhotoContainer) {
+                    profilePhotoContainer.innerHTML = '<img src="' + event.target.result + '" style="width: 100%; height: 100%; object-fit: cover;">' +
+                        '<div style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white;">📷</div>';
+                    profilePhotoContainer.setAttribute('onclick', 'document.getElementById(\'photo\').click();');
                 }
             };
             reader.readAsDataURL(file);
-        }
-    });
-
-    // Handle drag and drop
-    uploadContainer.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#0369a1';
-        this.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #a5f3fc 20%)';
-    });
-
-    uploadContainer.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#06b6d4';
-        this.style.background = 'linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';
-    });
-
-    uploadContainer.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#06b6d4';
-        this.style.background = 'linear-gradient(135deg, #f0fdfc 0%, #cffafe 20%)';
-        
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            photoInput.files = e.dataTransfer.files;
-            const event = new Event('change', { bubbles: true });
-            photoInput.dispatchEvent(event);
         }
     });
 });

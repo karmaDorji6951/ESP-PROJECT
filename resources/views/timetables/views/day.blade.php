@@ -89,6 +89,20 @@
 @push('styles')
 <style>
 .day-view {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f1e8;
+    --border-color: #d4c4a8;
+    --text-primary: #2c3e50;
+    --text-secondary: #4f6472;
+    --text-muted: #7a6a5a;
+    --supervisor-accent: #2c3e50;
+    --supervisor-dark: #1a252f;
+    --success: #5a8a7a;
+    --warning: #d4c4a8;
+    --danger: #a85a5a;
+}
+
+.day-view {
     background-color: var(--bg-primary);
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -110,6 +124,9 @@
 
 .timeline {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .timeline-item {
@@ -150,6 +167,7 @@
     border-radius: 8px;
     padding: 16px;
     transition: box-shadow 0.3s;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.05);
 }
 
 .schedule-card:hover {
@@ -273,9 +291,9 @@
 }
 
 .btn-edit {
-    background-color: #eff6ff;
-    color: #1e40af;
-    border-color: #3b82f6;
+    background-color: #eef4f8;
+    color: #2c3e50;
+    border-color: #7a9fb5;
 }
 
 .btn-edit:hover {
@@ -284,9 +302,9 @@
 }
 
 .btn-delete {
-    background-color: #fef2f2;
-    color: #991b1b;
-    border-color: #ef4444;
+    background-color: #f8e8e8;
+    color: #7a4a4a;
+    border-color: #a85a5a;
 }
 
 .btn-delete:hover {

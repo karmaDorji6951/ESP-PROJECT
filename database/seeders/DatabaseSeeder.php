@@ -19,41 +19,78 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $allowedLoginEmails = [
+            'karma.dorji@rim.edu.bt',
+            'sonam.tobgay@rim.edu.bt',
+            'karma.wangdi@rim.edu.bt',
+            'pema.choden@rim.edu.bt',
+            'sonam.tashi@rim.edu.bt',
+        ];
+
         $adminRole = Role::updateOrCreate(['slug' => 'admin'], ['name' => 'Admin']);
         $supervisorRole = Role::updateOrCreate(['slug' => 'supervisor'], ['name' => 'Supervisor']);
         $staffRole = Role::updateOrCreate(['slug' => 'staff'], ['name' => 'Staff']);
 
+        // Remove legacy placeholder demo staff accounts if they exist.
+        User::whereIn('name', ['Staff 1', 'Staff 2', 'Staff 3'])->delete();
+        User::whereIn('email', ['staff1@esp.local', 'staff2@esp.local', 'staff3@esp.local'])->delete();
+        User::whereIn('email', ['admin@esp.local', 'supervisor@esp.local'])->delete();
+
         $admin = User::updateOrCreate(
-            ['email' => 'admin@esp.local'],
+            ['email' => 'karma.dorji@rim.edu.bt'],
             [
-                'name' => 'System Admin',
+                'name' => 'Karma Dorji',
+                'phone' => '17123456',
                 'password' => Hash::make('password'),
                 'role_id' => $adminRole->id,
             ]
         );
 
         $supervisor = User::updateOrCreate(
-            ['email' => 'supervisor@esp.local'],
+            ['email' => 'sonam.tobgay@rim.edu.bt'],
             [
-                'name' => 'Line Supervisor',
+                'name' => 'Sonam Tobgay',
+                'phone' => '17654321',
                 'password' => Hash::make('password'),
                 'role_id' => $supervisorRole->id,
             ]
         );
 
-        $staff = User::updateOrCreate(
-            ['email' => 'staff@esp.local'],
+        // Create individual staff users
+        $staff1 = User::updateOrCreate(
+            ['email' => 'karma.wangdi@rim.edu.bt'],
             [
-                'name' => 'Sample Staff',
+                'name' => 'Karma Wangdi',
                 'password' => Hash::make('password'),
                 'role_id' => $staffRole->id,
             ]
         );
 
+        $staff2 = User::updateOrCreate(
+            ['email' => 'pema.choden@rim.edu.bt'],
+            [
+                'name' => 'Pema Choden',
+                'password' => Hash::make('password'),
+                'role_id' => $staffRole->id,
+            ]
+        );
+
+        $staff3 = User::updateOrCreate(
+            ['email' => 'sonam.tashi@rim.edu.bt'],
+            [
+                'name' => 'Sonam Tashi',
+                'password' => Hash::make('password'),
+                'role_id' => $staffRole->id,
+            ]
+        );
+
+        // Remove any other user accounts so only the allowed logins remain.
+        User::whereNotIn('email', $allowedLoginEmails)->delete();
+
         $employees = collect([
-            ['name' => 'Pema Dorji', 'cid' => '11111111111', 'phone' => '17111111', 'role_title' => 'Cleaner', 'address' => 'Thimphu', 'joining_date' => '2025-01-15'],
-            ['name' => 'Sonam Choden', 'cid' => '22222222222', 'phone' => '17222222', 'role_title' => 'Guard', 'address' => 'Paro', 'joining_date' => '2025-02-01'],
-            ['name' => 'Karma Wangdi', 'cid' => '33333333333', 'phone' => '17333333', 'role_title' => 'Helper', 'address' => 'Punakha', 'joining_date' => '2025-03-10'],
+            ['name' => 'Karma Wangdi', 'cid' => '11806007891', 'phone' => '17112233', 'role_title' => 'Security Guard', 'department' => 'Security', 'address' => 'Paro', 'joining_date' => '2025-01-15'],
+            ['name' => 'Pema Choden', 'cid' => '12005001234', 'phone' => '77123456', 'role_title' => 'Cleaner', 'department' => 'Maintenance', 'address' => 'Chhukha', 'joining_date' => '2025-02-01'],
+            ['name' => 'Sonam Tashi', 'cid' => '11504005678', 'phone' => '17654321', 'role_title' => 'Gardener', 'department' => 'Grounds', 'address' => 'Samtse', 'joining_date' => '2025-03-10'],
         ])->map(fn ($employee) => Employee::updateOrCreate(['cid' => $employee['cid']], $employee + ['status' => 'Active']));
 
         foreach ($employees as $employee) {
@@ -67,7 +104,10 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $staff->update(['employee_id' => $employees[2]->id]);
+        // Assign employees to corresponding staff users
+        $staff1->update(['employee_id' => $employees[0]->id]);
+        $staff2->update(['employee_id' => $employees[1]->id]);
+        $staff3->update(['employee_id' => $employees[2]->id]);
 
         Task::updateOrCreate([
             'employee_id' => $employees[0]->id,
@@ -83,14 +123,35 @@ class DatabaseSeeder extends Seeder
             'employee_id' => $employees[1]->id,
             'title' => 'Security checkpoint review',
         ], [
-            'assigned_by' => $admin->id,
-            'description' => 'Inspect gates and report incidents.',
+            'assigned_by' => $supervisor->id,
+            'description' => 'Inspect all security checkpoints, verify visitor logs, and report any incidents.',
             'status' => 'Pending',
             'deadline' => today()->addDays(1)->toDateString(),
         ]);
 
+        // Additional tasks for Staff 2
+        Task::updateOrCreate([
+            'employee_id' => $employees[1]->id,
+            'title' => 'Main gate security duty',
+        ], [
+            'assigned_by' => $supervisor->id,
+            'description' => 'Monitor main school gate, check visitor passes, ensure student safety during entry/exit times.',
+            'status' => 'Pending',
+            'deadline' => today()->addDays(3)->toDateString(),
+        ]);
+
+        Task::updateOrCreate([
+            'employee_id' => $employees[1]->id,
+            'title' => 'Evening patrol rounds',
+        ], [
+            'assigned_by' => $supervisor->id,
+            'description' => 'Conduct evening security patrol around school campus, check all doors and windows.',
+            'status' => 'Pending',
+            'deadline' => today()->addDays(2)->toDateString(),
+        ]);
+
         LeaveRequest::updateOrCreate([
-            'user_id' => $staff->id,
+            'user_id' => $staff3->id,
             'leave_type' => 'Casual Leave',
             'start_date' => today()->addDays(5)->toDateString(),
         ], [
@@ -212,5 +273,6 @@ class DatabaseSeeder extends Seeder
             'assigned_to_role' => 'staff',
             'assigned_by' => $admin->id,
         ]);
-    }
+
+            }
 }

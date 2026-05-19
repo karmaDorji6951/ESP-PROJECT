@@ -1,4 +1,34 @@
 @php($model = $employee ?? null)
+@push('scripts')
+<script>
+const gewogsByDzongkhag = @json($gewogsByDzongkhag ?? []);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dzongkhagSelect = document.getElementById('dzongkhag_id');
+    const gewogSelect = document.getElementById('gewog_id');
+    
+    dzongkhagSelect.addEventListener('change', function() {
+        const dzongkhagId = this.value;
+        gewogSelect.innerHTML = '<option value="">Select Gewog</option>';
+        
+        if (dzongkhagId && gewogsByDzongkhag[dzongkhagId]) {
+            gewogsByDzongkhag[dzongkhagId].forEach(function(gewog) {
+                const option = document.createElement('option');
+                option.value = gewog.id;
+                option.textContent = gewog.name;
+                gewogSelect.appendChild(option);
+            });
+        }
+    });
+    
+    // Trigger change on page load if dzongkhag is pre-selected
+    if (dzongkhagSelect.value) {
+        dzongkhagSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+@endpush
+
 <div class="col-md-6">
     <label class="form-label">Full Name</label>
     <input type="text" name="name" value="{{ old('name', $model->name ?? '') }}" class="form-control" required>
@@ -13,7 +43,30 @@
 </div>
 <div class="col-md-6">
     <label class="form-label">Role / Position</label>
-    <input type="text" name="role_title" value="{{ old('role_title', $model->role_title ?? '') }}" class="form-control" required>
+    <select name="role_title" class="form-select" required>
+        <option value="">Select Role</option>
+        <option value="cleaner" @selected(old('role_title', $model->role_title ?? '') === 'cleaner')>Cleaner</option>
+        <option value="guard" @selected(old('role_title', $model->role_title ?? '') === 'guard')>Guard</option>
+        <option value="gardener" @selected(old('role_title', $model->role_title ?? '') === 'gardener')>Gardener</option>
+    </select>
+</div>
+<div class="col-md-6">
+    <label class="form-label">Dzongkhag</label>
+    <select name="dzongkhag_id" id="dzongkhag_id" class="form-select" required>
+        <option value="">Select Dzongkhag</option>
+        @foreach($dzongkhags ?? [] as $dzongkhag)
+            <option value="{{ $dzongkhag->id }}" @selected(old('dzongkhag_id', $model->dzongkhag_id ?? '') == $dzongkhag->id)>{{ $dzongkhag->name }}</option>
+        @endforeach
+    </select>
+</div>
+<div class="col-md-6">
+    <label class="form-label">Gewog</label>
+    <select name="gewog_id" id="gewog_id" class="form-select" required>
+        <option value="">Select Gewog</option>
+        @if(isset($model->gewog_id))
+            <option value="{{ $model->gewog_id }}" selected>{{ $model->gewog->name ?? '' }}</option>
+        @endif
+    </select>
 </div>
 <div class="col-12">
     <label class="form-label">Address</label>

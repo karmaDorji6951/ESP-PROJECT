@@ -4,78 +4,161 @@
 @section('page_title', 'Admin Dashboard')
 
 @section('content')
-<div class="alert alert-info alert-dismissible fade show" role="alert">
-    <strong>Admin Panel</strong> - Manage all users, employees, and system operations.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!-- Welcome Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Welcome back, {{ auth()->user()->name }}!</h2>
+        <p class="text-muted mb-0">Here's what's happening with your ESP management system today.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.users.index') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-2"></i>Add User
+        </a>
+        <a href="{{ route('admin.employees.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-person-badge me-2"></i>Manage Employees
+        </a>
+    </div>
 </div>
 
-<!-- User Management Summary -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Total Users</div>
-                <div class="fs-2 fw-bold text-primary">{{ $summary['total_users'] }}</div>
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4 justify-content-center">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-people text-primary fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Total Users</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_users'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Supervisors</div>
-                <div class="fs-2 fw-bold text-info">{{ $summary['total_supervisors'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-shield-check text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Supervisors</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_supervisors'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Staff</div>
-                <div class="fs-2 fw-bold text-warning">{{ $summary['total_staff'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-person-workspace text-warning fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Staff</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_staff'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Total Employees</div>
-                <div class="fs-2 fw-bold text-success">{{ $summary['total_employees'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-building text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Total Employees</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_employees'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Operational Summary -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Active Employees</div>
-                <div class="fs-2 fw-bold">{{ $summary['active_employees'] }}</div>
+<div class="row g-4 mb-4 justify-content-center">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-person-check text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Active Employees</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['active_employees'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Present Today</div>
-                <div class="fs-2 fw-bold text-success">{{ $summary['present_today'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-calendar-check text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Present Today</h6>
+                        <h3 class="fw-bold mb-0 text-success">{{ $summary['present_today'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Pending Tasks</div>
-                <div class="fs-2 fw-bold text-danger">{{ $summary['pending_tasks'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-clock-history text-danger fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Pending Tasks</h6>
+                        <h3 class="fw-bold mb-0 text-danger">{{ $summary['pending_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Pending Leaves</div>
-                <div class="fs-2 fw-bold text-warning">{{ $summary['pending_leaves'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-calendar-x text-warning fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Pending Leaves</h6>
+                        <h3 class="fw-bold mb-0 text-warning">{{ $summary['pending_leaves'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -224,7 +307,7 @@
         <div class="card card-soft">
             <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
                 <span>Pending Leave Requests</span>
-                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="{{ route('admin.leaves.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
             <div class="table-responsive">
                 <table class="table mb-0">
@@ -243,11 +326,11 @@
                             <tr>
                                 <td>{{ $leave->employee?->name ?? $leave->user?->name }}</td>
                                 <td>{{ $leave->leave_type ?? 'N/A' }}</td>
-                                <td>{{ $leave->from_date?->format('Y-m-d') ?? 'N/A' }}</td>
-                                <td>{{ $leave->to_date?->format('Y-m-d') ?? 'N/A' }}</td>
+                                <td>{{ $leave->start_date?->format('Y-m-d') ?? 'N/A' }}</td>
+                                <td>{{ $leave->end_date?->format('Y-m-d') ?? 'N/A' }}</td>
                                 <td><span class="badge bg-warning">{{ $leave->status }}</span></td>
                                 <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">Review</a>
+                                    <a href="{{ route('admin.leaves.show', $leave) }}" class="btn btn-sm btn-outline-primary">Review</a>
                                 </td>
                             </tr>
                         @empty

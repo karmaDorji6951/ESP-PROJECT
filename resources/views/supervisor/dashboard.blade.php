@@ -10,64 +10,127 @@
 </div>
 
 <!-- Team Overview -->
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Total Staff</div>
-                <div class="fs-2 fw-bold text-primary">{{ $summary['total_staff'] }}</div>
+<div class="row g-4 mb-4 justify-content-center">
+    <div class="col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-people text-primary fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Total Staff</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_staff'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Total Employees</div>
-                <div class="fs-2 fw-bold text-info">{{ $summary['total_employees'] }}</div>
+    <div class="col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-building text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Total Employees</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['total_employees'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Active Employees</div>
-                <div class="fs-2 fw-bold text-success">{{ $summary['active_employees'] }}</div>
+    <div class="col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-person-check text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Active Employees</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['active_employees'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Attendance Summary -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Present Today</div>
-                <div class="fs-2 fw-bold text-success">{{ $summary['present_today'] }}</div>
+<div class="row g-4 mb-4 justify-content-center">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-calendar-check text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Present Today</h6>
+                        <h3 class="fw-bold mb-0 text-success">{{ $summary['present_today'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Absent Today</div>
-                <div class="fs-2 fw-bold text-danger">{{ $summary['absent_today'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-calendar-x text-danger fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Absent Today</h6>
+                        <h3 class="fw-bold mb-0 text-danger">{{ $summary['absent_today'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">On Leave Today</div>
-                <div class="fs-2 fw-bold text-warning">{{ $summary['on_leave_today'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-calendar-range text-warning fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">On Leave</h6>
+                        <h3 class="fw-bold mb-0 text-warning">{{ $summary['on_leave_today'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Pending Leaves</div>
-                <div class="fs-2 fw-bold text-warning">{{ $summary['pending_leaves'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-list-task text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Pending Tasks</h6>
+                        <h3 class="fw-bold mb-0 text-info">{{ $summary['pending_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -95,76 +158,8 @@
 
 <!-- Staff & Management Tables -->
 <div class="row g-4">
-    <!-- Staff Members -->
-    <div class="col-lg-4">
-        <div class="card card-soft h-100">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                <span>Your Staff</span>
-                <a href="{{ route('supervisor.tasks.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($staffUsers as $staff)
-                            <tr>
-                                <td>{{ $staff->name }}</td>
-                                <td><small>{{ $staff->email }}</small></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2" class="text-center text-muted py-3">No staff members.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Attendance -->
-    <div class="col-lg-8">
-        <div class="card card-soft">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                <span>Recent Attendance</span>
-                <a href="{{ route('supervisor.attendance.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentAttendance as $attendance)
-                            <tr>
-                                <td>{{ $attendance->employee?->name }}</td>
-                                <td>{{ $attendance->attendance_date?->format('Y-m-d') }}</td>
-                                <td><span class="badge {{ $attendance->status === 'Present' ? 'bg-success' : ($attendance->status === 'Absent' ? 'bg-danger' : 'bg-warning') }}">{{ $attendance->status }}</span></td>
-                                <td><small>{{ $attendance->remarks ?? '-' }}</small></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-3">No attendance records.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <!-- Assigned Tasks -->
-    <div class="col-lg-6">
+    <div class="col-lg-12">
         <div class="card card-soft">
             <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
                 <span>Assigned Tasks</span>
@@ -183,46 +178,12 @@
                         @forelse($recentTasks as $task)
                             <tr>
                                 <td>{{ $task->title }}</td>
-                                <td>{{ $task->employee?->name }}</td>
+                                <td>{{ $task->employee?->name ?? 'Unknown' }}</td>
                                 <td><span class="badge {{ $task->status === 'Completed' ? 'bg-success' : ($task->status === 'Pending' ? 'bg-danger' : 'bg-info') }}">{{ $task->status }}</span></td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="3" class="text-center text-muted py-3">No tasks.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Leave Requests -->
-    <div class="col-lg-6">
-        <div class="card card-soft">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                <span>Pending Leave Requests</span>
-                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Type</th>
-                            <th>Days</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentLeaves as $leave)
-                            <tr>
-                                <td>{{ $leave->employee?->name ?? $leave->user?->name }}</td>
-                                <td><small>{{ $leave->leave_type ?? 'N/A' }}</small></td>
-                                <td><small>{{ $leave->from_date?->format('m/d') ?? 'N/A' }} - {{ $leave->to_date?->format('m/d') ?? 'N/A' }}</small></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No pending requests.</td>
                             </tr>
                         @endforelse
                     </tbody>

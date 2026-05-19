@@ -33,11 +33,7 @@ class DashboardController extends Controller
         $recentEmployees = Employee::latest()->limit(8)->get();
         $recentAttendance = Attendance::with('employee')->latest('attendance_date')->limit(8)->get();
         $recentTasks = Task::with('employee')->latest()->limit(8)->get();
-        $recentLeaves = LeaveRequest::with('employee', 'user')->where('status', 'Pending')->latest()->limit(8)->get();
-        $staffUsers = User::whereHas('role', function ($q) {
-            $q->where('slug', 'staff');
-        })->latest()->limit(5)->get();
 
-        return view('supervisor.dashboard', compact('summary', 'recentEmployees', 'recentAttendance', 'recentTasks', 'recentLeaves', 'staffUsers'));
+        return view('supervisor.dashboard', compact('summary', 'recentEmployees', 'recentAttendance', 'recentTasks'));
     }
 }

@@ -3,17 +3,17 @@
     <div class="week-header">
         <h2>
             Week of {{ \Carbon\Carbon::parse($date)->startOfWeek()->format('F j') }} - 
-            {{ \Carbon\Carbon::parse($date)->endOfWeek()->format('F j, Y') }}
+            {{ \Carbon\Carbon::parse($date)->startOfWeek()->addDays(13)->format('F j, Y') }}
         </h2>
     </div>
 
     <div class="week-grid-simple">
         @php
             $weekStart = \Carbon\Carbon::parse($date)->startOfWeek();
-            $weekEnd = \Carbon\Carbon::parse($date)->endOfWeek();
+            $weekEnd = \Carbon\Carbon::parse($date)->startOfWeek()->addDays(13);
         @endphp
 
-        @for($day = 0; $day < 7; $day++)
+        @for($day = 0; $day < 14; $day++)
             @php
                 $currentDate = $weekStart->copy()->addDays($day);
                 $dayTimetables = $timetables->filter(function($timetable) use ($currentDate) {
@@ -74,9 +74,9 @@
 
     @if($timetables->isEmpty())
         <div class="empty-state">
-            <div class="empty-icon">ð</div>
-            <div class="empty-title">No schedules this week</div>
-            <div class="empty-description">No timetable entries found for this week</div>
+            <div class="empty-icon"><i class="bi bi-calendar-week"></i></div>
+            <div class="empty-title">No schedules in this period</div>
+            <div class="empty-description">No timetable entries found for these two weeks</div>
             @if($canCreate)
                 <a href="{{ route('timetables.create') }}?date={{ $date }}" class="btn btn-primary">
                     Add Schedule for This Week
@@ -101,22 +101,14 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Week view script loaded');
-    
     // Make function global
     window.showDayDetails = function(date) {
-        console.log('showDayDetails called with date:', date);
-        
         const modal = document.getElementById('dayDetailsModal');
         const modalDate = document.getElementById('modalDate');
         const modalBody = document.getElementById('modalBody');
-        
-        console.log('Modal elements:', { modal, modalDate, modalBody });
-        
+
         if (!modal || !modalDate || !modalBody) {
-            console.error('Modal elements not found');
-            modalBody.innerHTML = '<div class="error">Modal elements not found!</div>';
-            modal.style.display = 'block';
+            console.error('Day details modal elements not found');
             return;
         }
         
@@ -132,25 +124,19 @@ document.addEventListener('DOMContentLoaded', function() {
         modalDate.textContent = formattedDate;
         modalBody.innerHTML = '<div class="loading">Loading...</div>';
         modal.style.display = 'block';
-        
-        // Simple test first
-        console.log('Attempting to fetch details for date:', date);
-        
+
         // Use the correct route URL
         const url = '{{ route("timetables.day-details") }}?date=' + encodeURIComponent(date);
-        console.log('Fetching from URL:', url);
-        
+
         // Fetch day details via AJAX
         fetch(url)
             .then(response => {
-                console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.text();
             })
             .then(html => {
-                console.log('HTML received successfully');
                 modalBody.innerHTML = html;
             })
             .catch(error => {
@@ -160,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     window.closeDayDetails = function() {
-        console.log('closeDayDetails called');
         const modal = document.getElementById('dayDetailsModal');
         if (modal) {
             modal.style.display = 'none';
@@ -180,18 +165,34 @@ document.addEventListener('DOMContentLoaded', function() {
 @push('styles')
 <style>
 .week-view {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f1e8;
+    --border-color: #d4c4a8;
+    --text-primary: #2c3e50;
+    --text-secondary: #4f6472;
+    --text-muted: #7a6a5a;
+    --supervisor-accent: #2c3e50;
+    --supervisor-dark: #1a252f;
+    --success: #5a8a7a;
+    --warning: #d4c4a8;
+    --danger: #a85a5a;
     background-color: var(--bg-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
     overflow: hidden;
     position: relative;
     z-index: 1;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.06);
+}
+
+.week-view {
+    color: var(--text-primary);
 }
 
 .week-header {
-    padding: 20px 24px;
+    padding: 18px 22px;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
+    background: linear-gradient(135deg, #f5f1e8 0%, #ede6d9 100%);
 }
 
 .week-header h2 {
@@ -206,14 +207,14 @@ document.addEventListener('DOMContentLoaded', function() {
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
     background-color: var(--border-color);
-    border-radius: 8px;
+    border-radius: 0 0 10px 10px;
     overflow: hidden;
 }
 
 .day-cell-simple {
     background-color: var(--bg-primary);
-    min-height: 120px;
-    padding: 12px;
+    min-height: 180px;
+    padding: 14px;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
@@ -221,14 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .day-cell-simple:hover {
-    background-color: var(--bg-secondary);
+    background-color: #ede6d9;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .day-cell-simple.today {
-    background-color: #f0f9ff;
-    border: 2px solid var(--supervisor-accent);
+    background: linear-gradient(135deg, #eef4f8 0%, #f5f1e8 100%);
+    box-shadow: inset 0 0 0 2px rgba(44, 62, 80, 0.9);
 }
 
 .day-header-simple {
@@ -266,8 +267,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .count-badge {
-    background-color: var(--supervisor-accent);
-    color: white;
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5568 100%);
+    color: #f5f1e8;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 11px;
@@ -312,6 +313,9 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 6px;
     font-size: 10px;
     color: var(--text-secondary);
+    background: rgba(245, 241, 232, 0.7);
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 
 .task-time {
@@ -392,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: center;
     padding: 20px 24px;
     border-bottom: 1px solid var(--border-color);
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, #f5f1e8 0%, #ede6d9 100%);
     opacity: 1;
 }
 
@@ -471,7 +475,8 @@ document.addEventListener('DOMContentLoaded', function() {
 .empty-state {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 60px 20px;
+    padding: 48px 20px;
+    color: var(--text-primary);
 }
 
 .empty-icon {
@@ -507,12 +512,12 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .btn-primary {
-    background-color: var(--supervisor-accent);
-    color: white;
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5568 100%);
+    color: #f5f1e8;
 }
 
 .btn-primary:hover {
-    background-color: var(--supervisor-dark);
+    background: linear-gradient(135deg, #3d5568 0%, #1a252f 100%);
     transform: translateY(-2px);
 }
 
@@ -543,6 +548,10 @@ document.addEventListener('DOMContentLoaded', function() {
     .timetable-event {
         font-size: 9px;
         padding: 2px 4px;
+    }
+
+    .day-cell-simple {
+        min-height: 140px;
     }
     
     .event-title {

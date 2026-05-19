@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dzongkhag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -33,8 +35,10 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $user->load(['role', 'employee']);
+
+        $dzongkhags = Dzongkhag::query()->orderBy('name')->get();
         
-        return view('profile.edit', compact('user'));
+        return view('profile.edit', compact('user', 'dzongkhags'));
     }
 
     /**
@@ -55,8 +59,8 @@ class ProfileController extends Controller
         // Handle photo upload
         if ($request->hasFile('photo')) {
             // Delete old photo if exists
-            if ($user->photo_path && \Storage::exists($user->photo_path)) {
-                \Storage::delete($user->photo_path);
+            if ($user->photo_path && Storage::disk('public')->exists($user->photo_path)) {
+                Storage::disk('public')->delete($user->photo_path);
             }
 
             // Store new photo
@@ -78,6 +82,30 @@ class ProfileController extends Controller
 
         return redirect()->route('profile.show')
             ->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Upload/update only the user's profile photo.
+     */
+    public function uploadPhoto(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($user->photo_path && Storage::disk('public')->exists($user->photo_path)) {
+            Storage::disk('public')->delete($user->photo_path);
+        }
+
+        $photoPath = $request->file('photo')->store('profiles', 'public');
+        $user->update([
+            'photo_path' => $photoPath,
+        ]);
+
+        return redirect()->route('profile.show')
+            ->with('success', 'Profile photo updated successfully.');
     }
 
     /**
@@ -132,8 +160,8 @@ class ProfileController extends Controller
 
         $totalDays = \App\Models\Attendance::where('employee_id', $user->employee->id)->count();
         $presentDays = \App\Models\Attendance::where('employee_id', $user->employee->id)
-                                       ->where('status', 'Present')
-                                       ->count();
+            ->whereIn('status', ['Present', 'Late'])
+            ->count();
 
         return $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
     }

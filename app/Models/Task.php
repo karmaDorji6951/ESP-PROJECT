@@ -49,6 +49,11 @@ class Task extends Model
         return $this->hasOne(TaskSubmission::class)->latest();
     }
 
+    public function evaluation()
+    {
+        return $this->hasOne(TaskEvaluation::class);
+    }
+
     public function timetable()
     {
         return $this->hasOne(Timetable::class);

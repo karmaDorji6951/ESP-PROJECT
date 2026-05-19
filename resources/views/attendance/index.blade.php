@@ -4,11 +4,20 @@
 @section('page_title', 'Attendance Management')
 
 @section('content')
+@php
+    $isWeekend = $date->isWeekend();
+@endphp
+
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card card-soft mb-4">
             <div class="card-header bg-white fw-semibold">Mark Daily Attendance</div>
             <div class="card-body">
+                @if($isWeekend)
+                    <div class="alert alert-info mb-3">
+                        Weekend (Saturday/Sunday) is not a working day. Attendance can be marked only Monday to Friday.
+                    </div>
+                @endif
                 <form method="POST" action="{{ route('attendance.store') }}">
                     @csrf
                     <div class="mb-3">
@@ -43,7 +52,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <button class="btn btn-primary mt-3">Save Attendance</button>
+                    <button class="btn btn-primary mt-3" @disabled($isWeekend)>Save Attendance</button>
                 </form>
             </div>
         </div>

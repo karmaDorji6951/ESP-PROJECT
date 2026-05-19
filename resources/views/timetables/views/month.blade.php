@@ -85,6 +85,20 @@
 @push('styles')
 <style>
 .month-view {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f1e8;
+    --border-color: #d4c4a8;
+    --text-primary: #2c3e50;
+    --text-secondary: #4f6472;
+    --text-muted: #7a6a5a;
+    --supervisor-accent: #2c3e50;
+    --supervisor-dark: #1a252f;
+    --success: #5a8a7a;
+    --warning: #d4c4a8;
+    --danger: #a85a5a;
+}
+
+.month-view {
     background-color: var(--bg-primary);
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -108,6 +122,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     min-height: 500px;
+    background: var(--border-color);
 }
 
 .calendar-day-header {
@@ -131,6 +146,7 @@
     border-bottom: 1px solid var(--border-color);
     position: relative;
     background-color: var(--bg-primary);
+    padding-bottom: 26px;
 }
 
 .calendar-day:nth-child(7n) {
@@ -170,14 +186,14 @@
 }
 
 .calendar-events {
-    padding: 4px;
+    padding: 6px;
 }
 
 .calendar-event {
-    padding: 3px 6px;
-    border-radius: 3px;
-    margin-bottom: 2px;
-    font-size: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -204,7 +220,7 @@
 
 .event-employee {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: 10px;
 }
 
 .more-events {
@@ -219,10 +235,10 @@
     position: absolute;
     bottom: 4px;
     right: 4px;
-    width: 20px;
-    height: 20px;
-    background-color: var(--supervisor-accent);
-    color: white;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5568 100%);
+    color: #f5f1e8;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -247,6 +263,7 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 60px 20px;
+    color: var(--text-primary);
 }
 
 .empty-icon {

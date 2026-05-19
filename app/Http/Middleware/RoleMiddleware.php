@@ -14,9 +14,16 @@ class RoleMiddleware
             return redirect()->route('login');
         }
 
-        $userRole = optional(Auth::user()->role)->slug ?? optional(Auth::user()->role)->name;
+        $normalize = static fn ($value): ?string => $value === null
+            ? null
+            : strtolower(trim((string) $value));
 
-        if (! in_array($userRole, $roles, true) && ! in_array(optional(Auth::user()->role)->name, $roles, true)) {
+        $allowedRoles = array_values(array_filter(array_map($normalize, $roles)));
+
+        $userRoleSlug = $normalize(optional(Auth::user()->role)->slug);
+        $userRoleName = $normalize(optional(Auth::user()->role)->name);
+
+        if (! in_array($userRoleSlug, $allowedRoles, true) && ! in_array($userRoleName, $allowedRoles, true)) {
             abort(403, 'You are not authorized to access this page.');
         }
 

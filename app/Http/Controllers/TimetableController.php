@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\Timetable;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -40,7 +41,9 @@ class TimetableController extends Controller
 
         $endDate = match($view) {
             'day' => Carbon::parse($date),
-            'week' => Carbon::parse($date)->endOfWeek(),
+            // Show 2 rows of days in week view (14-day window).
+            // We keep navigation stepping by 7 days so weeks overlap naturally.
+            'week' => Carbon::parse($date)->startOfWeek()->addDays(13),
             'month' => Carbon::parse($date)->endOfMonth(),
             default => Carbon::parse($date)->endOfWeek(),
         };
@@ -88,22 +91,15 @@ class TimetableController extends Controller
 
         $validated['assigned_by'] = Auth::id();
 
+        $targetEmployeeId = $this->resolveTargetEmployeeId($validated);
+        if ($targetEmployeeId) {
+            $validated['employee_id'] = $targetEmployeeId;
+        }
+
         $timetable = Timetable::create($validated);
 
-        // Create corresponding task if employee is assigned
-        if (!empty($validated['employee_id'])) {
-            $task = Task::create([
-                'employee_id' => $validated['employee_id'],
-                'assigned_by' => Auth::id(),
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'schedule_start_date' => $validated['date'],
-                'schedule_end_date' => $validated['date'],
-                'status' => 'Pending',
-            ]);
-
-            // Link task to timetable
-            $timetable->update(['task_id' => $task->id]);
+        if ($targetEmployeeId) {
+            $this->syncTaskWithTimetable($timetable, $validated, $targetEmployeeId);
         }
 
         return redirect()->route('timetables.index', [
@@ -159,37 +155,15 @@ class TimetableController extends Controller
             'assigned_to_role' => 'nullable|in:admin,supervisor,staff',
         ]);
 
+        $targetEmployeeId = $this->resolveTargetEmployeeId($validated);
+        if ($targetEmployeeId) {
+            $validated['employee_id'] = $targetEmployeeId;
+        }
+
         $timetable->update($validated);
 
-        // Sync task if it exists
-        if ($timetable->task) {
-            $taskStatus = match($validated['status']) {
-                'completed' => 'Completed',
-                'in_progress' => 'In Progress',
-                default => 'Pending',
-            };
-
-            $timetable->task->update([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'schedule_start_date' => $validated['date'],
-                'schedule_end_date' => $validated['date'],
-                'status' => $taskStatus,
-                'employee_id' => $validated['employee_id'],
-            ]);
-        } elseif (!empty($validated['employee_id'])) {
-            // If no task exists but employee is assigned, create one
-            $task = Task::create([
-                'employee_id' => $validated['employee_id'],
-                'assigned_by' => Auth::id(),
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'schedule_start_date' => $validated['date'],
-                'schedule_end_date' => $validated['date'],
-                'status' => 'Pending',
-            ]);
-
-            $timetable->update(['task_id' => $task->id]);
+        if ($targetEmployeeId) {
+            $this->syncTaskWithTimetable($timetable, $validated, $targetEmployeeId);
         }
 
         return redirect()->route('timetables.index')
@@ -270,5 +244,54 @@ class TimetableController extends Controller
         }
 
         return false;
+    }
+
+    private function resolveTargetEmployeeId(array $validated): ?int
+    {
+        if (!empty($validated['employee_id'])) {
+            return (int) $validated['employee_id'];
+        }
+
+        if (($validated['assigned_to_role'] ?? null) === 'staff') {
+            return $this->sampleStaffEmployeeId();
+        }
+
+        return null;
+    }
+
+    private function sampleStaffEmployeeId(): ?int
+    {
+        return User::whereHas('role', function ($query) {
+            $query->where('slug', 'staff');
+        })
+        ->whereNotNull('employee_id')
+        ->value('employee_id');
+    }
+
+    private function syncTaskWithTimetable(Timetable $timetable, array $validated, int $employeeId): void
+    {
+        $taskStatus = match ($validated['status'] ?? 'scheduled') {
+            'completed' => 'Completed',
+            'in_progress' => 'In Progress',
+            default => 'Pending',
+        };
+
+        $taskData = [
+            'employee_id' => $employeeId,
+            'assigned_by' => Auth::id(),
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'schedule_start_date' => $validated['date'],
+            'schedule_end_date' => $validated['date'],
+            'status' => $taskStatus,
+        ];
+
+        if ($timetable->task) {
+            $timetable->task->update($taskData);
+            return;
+        }
+
+        $task = Task::create($taskData);
+        $timetable->update(['task_id' => $task->id]);
     }
 }

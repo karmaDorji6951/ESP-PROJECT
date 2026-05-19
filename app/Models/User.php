@@ -20,6 +20,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'address',
         'password',
         'role_id',
         'employee_id',
@@ -45,6 +47,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Eager load relationships for every query
+     */
+    protected $with = ['role'];
 
     public function role()
     {

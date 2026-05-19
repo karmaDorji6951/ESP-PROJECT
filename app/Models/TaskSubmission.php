@@ -17,6 +17,7 @@ class TaskSubmission extends Model
         'submission_status',
         'submitted_at',
         'reviewed_at',
+        'photo_evidence',
     ];
 
     protected $casts = [
@@ -33,5 +34,13 @@ class TaskSubmission extends Model
     public function submitter()
     {
         return $this->belongsTo(User::class, 'submitted_by');
+    }
+
+    public function getPhotoUrlAttribute()
+    {
+        if ($this->photo_evidence) {
+            return asset('storage/' . $this->photo_evidence);
+        }
+        return null;
     }
 }

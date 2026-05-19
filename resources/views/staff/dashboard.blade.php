@@ -10,36 +10,72 @@
 </div>
 
 <!-- Personal Stats -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">My Tasks</div>
-                <div class="fs-2 fw-bold text-primary">{{ $summary['my_tasks'] }}</div>
+<div class="row g-4 mb-4 justify-content-center">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-list-task text-primary fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">My Tasks</h6>
+                        <h3 class="fw-bold mb-0">{{ $summary['my_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Completed</div>
-                <div class="fs-2 fw-bold text-success">{{ $summary['completed_tasks'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-check-circle text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Completed</h6>
+                        <h3 class="fw-bold mb-0 text-success">{{ $summary['completed_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">In Progress</div>
-                <div class="fs-2 fw-bold text-info">{{ $summary['in_progress_tasks'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-hourglass-split text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">In Progress</h6>
+                        <h3 class="fw-bold mb-0 text-info">{{ $summary['in_progress_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-soft h-100">
-            <div class="card-body text-center">
-                <div class="text-muted mb-2">Pending</div>
-                <div class="fs-2 fw-bold text-warning">{{ $summary['pending_tasks'] }}</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-clock text-warning fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Pending</h6>
+                        <h3 class="fw-bold mb-0 text-warning">{{ $summary['pending_tasks'] }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -72,6 +108,45 @@
         </div>
     </div>
 </div>
+
+<!-- Notifications Section -->
+@if ($notifications->count() > 0)
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card card-soft border-info">
+            <div class="card-header bg-info text-white fw-semibold d-flex justify-content-between align-items-center">
+                <span>🔔 Recent Notifications</span>
+                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach ($notifications as $notification)
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">{{ $notification->data['message'] ?? 'New notification' }}</div>
+                                @if(isset($notification->data['title']))
+                                    <small class="text-muted">Task: {{ $notification->data['title'] }}</small>
+                                @endif
+                                @if(isset($notification->data['deadline']))
+                                    <div class="mt-1">
+                                        <small class="text-warning">⏰ Deadline: {{ $notification->data['deadline'] }}</small>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                @if(!$notification->read_at)
+                                    <span class="badge bg-primary ms-2">New</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Main Content -->
 <div class="row g-4">
@@ -115,7 +190,7 @@
         <div class="card card-soft">
             <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
                 <span>My Tasks</span>
-                <a href="{{ route('tasks.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="{{ route('staff.tasks.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
             <div class="table-responsive">
                 <table class="table mb-0">

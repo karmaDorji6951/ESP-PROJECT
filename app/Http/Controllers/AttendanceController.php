@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -40,6 +41,13 @@ class AttendanceController extends Controller
             'statuses' => ['required', 'array'],
             'remarks' => ['nullable', 'array'],
         ]);
+
+        $attendanceDate = Carbon::parse($data['attendance_date']);
+        if ($attendanceDate->isWeekend()) {
+            return back()
+                ->withErrors(['attendance_date' => 'Attendance can only be marked Monday to Friday.'])
+                ->withInput();
+        }
 
         foreach ($data['employee_ids'] as $employeeId) {
             Attendance::updateOrCreate(

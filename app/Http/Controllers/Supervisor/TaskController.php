@@ -3,33 +3,87 @@
 namespace App\Http\Controllers\Supervisor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\Task;
 use App\Models\Timetable;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::with('employee', 'assigner')->paginate(15);
+        $tasks = Task::with('employee', 'assigner')
+            ->where('assigned_by', auth()->id())
+            ->latest()
+            ->paginate(15);
         return view('supervisor.tasks.index', compact('tasks'));
+    }
+
+    public function show(Task $task)
+    {
+        if ($task->assigned_by !== auth()->id()) {
+            abort(404);
+        }
+
+        $task->load([
+            'employee.user',
+            'assigner',
+            'timetable',
+            'latestSubmission.submitter',
+            'evaluation',
+        ]);
+
+        return view('supervisor.tasks.show', compact('task'));
     }
 
     public function create()
     {
-        $employees = \App\Models\Employee::all();
-        return view('supervisor.tasks.create', compact('employees'));
+        $departments = Employee::query()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->distinct()
+            ->orderBy('department')
+            ->pluck('department');
+
+        $employeesQuery = Employee::query()->orderBy('name');
+
+        if ($departments->isNotEmpty()) {
+            $employeesQuery
+                ->whereNotNull('department')
+                ->where('department', '!=', '');
+        }
+
+        $employees = $employeesQuery->get();
+
+        return view('supervisor.tasks.create', compact('employees', 'departments'));
     }
 
     public function store(Request $request)
     {
+        $hasDepartments = Employee::query()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->exists();
+
+        $department = $request->input('department');
+        $employeeExistsRule = Rule::exists('employees', 'id');
+
+        if (! empty($department)) {
+            $employeeExistsRule = Rule::exists('employees', 'id')
+                ->where(fn ($query) => $query->where('department', $department));
+        }
+
         $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+            'department' => $hasDepartments ? 'required|string' : 'nullable|string',
+            'employee_id' => ['required', $employeeExistsRule],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:Pending,In Progress,Completed',
             'deadline' => 'nullable|date',
         ]);
+
+        unset($validated['department']);
 
         $validated['assigned_by'] = auth()->id();
         $task = Task::create($validated);
@@ -53,19 +107,53 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        $employees = \App\Models\Employee::all();
-        return view('supervisor.tasks.edit', compact('task', 'employees'));
+        $departments = Employee::query()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->distinct()
+            ->orderBy('department')
+            ->pluck('department');
+
+        $employeesQuery = Employee::query()->orderBy('name');
+
+        if ($departments->isNotEmpty()) {
+            $employeesQuery
+                ->whereNotNull('department')
+                ->where('department', '!=', '');
+        }
+
+        $employees = $employeesQuery->get();
+
+        $task->loadMissing('employee');
+
+        return view('supervisor.tasks.edit', compact('task', 'employees', 'departments'));
     }
 
     public function update(Request $request, Task $task)
     {
+        $hasDepartments = Employee::query()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->exists();
+
+        $department = $request->input('department');
+        $employeeExistsRule = Rule::exists('employees', 'id');
+
+        if (! empty($department)) {
+            $employeeExistsRule = Rule::exists('employees', 'id')
+                ->where(fn ($query) => $query->where('department', $department));
+        }
+
         $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+            'department' => $hasDepartments ? 'required|string' : 'nullable|string',
+            'employee_id' => ['required', $employeeExistsRule],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:Pending,In Progress,Completed',
             'deadline' => 'nullable|date',
         ]);
+
+        unset($validated['department']);
 
         $task->update($validated);
 

@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskSubmission;
 use App\Models\Timetable;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -91,6 +92,12 @@ class TaskController extends Controller
             'assigned_by' => auth()->id(),
             'task_id' => $task->id,
         ]);
+
+        // Load relationships for notification
+        $task->load('employee', 'assigner');
+
+        // Dispatch event to notify employee
+        TaskAssigned::dispatch($task);
 
         return redirect()->route('tasks.index')->with('success', 'Timetable work assigned successfully.');
     }

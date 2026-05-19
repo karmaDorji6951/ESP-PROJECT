@@ -89,15 +89,29 @@ function changeDate() {
 @push('styles')
 <style>
 .timetable-container {
-    max-width: 1400px;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f1e8;
+    --border-color: #d4c4a8;
+    --text-primary: #2c3e50;
+    --text-secondary: #4f6472;
+    --text-muted: #7a6a5a;
+    --supervisor-accent: #2c3e50;
+    --supervisor-dark: #1a252f;
+    max-width: 1280px;
     margin: 0 auto;
+    padding: 12px 8px 24px;
+}
+
+.timetable-container {
+    color: var(--text-primary);
 }
 
 .timetable-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    gap: 24px;
+    margin-bottom: 20px;
 }
 
 .header-left h1 {
@@ -110,22 +124,26 @@ function changeDate() {
 .header-left p {
     color: var(--text-muted);
     font-size: 14px;
+    margin: 0;
 }
 
 .header-right {
     display: flex;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .view-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    padding: 16px;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px 18px;
     background-color: var(--bg-primary);
     border-radius: 8px;
     border: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.05);
 }
 
 .view-tabs {
@@ -134,23 +152,25 @@ function changeDate() {
 }
 
 .view-tab {
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--text-secondary);
     font-weight: 500;
     transition: all 0.3s;
     border: 1px solid transparent;
+    background: transparent;
 }
 
 .view-tab:hover {
-    background-color: var(--bg-secondary);
+    background-color: #ede6d9;
     color: var(--text-primary);
 }
 
 .view-tab.active {
-    background-color: var(--supervisor-accent);
-    color: white;
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5568 100%);
+    color: #f5f1e8;
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.18);
 }
 
 .date-navigation {
@@ -160,17 +180,18 @@ function changeDate() {
 }
 
 .nav-btn {
-    background: var(--bg-secondary);
+    background: #ede6d9;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 8px 12px;
     cursor: pointer;
     font-size: 16px;
     transition: all 0.3s;
+    color: var(--text-primary);
 }
 
 .nav-btn:hover {
-    background-color: var(--supervisor-light);
+    background-color: #d4c4a8;
 }
 
 .date-input {
@@ -178,6 +199,8 @@ function changeDate() {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
+    color: var(--text-primary);
+    background: #ffffff;
 }
 
 .btn {
@@ -196,28 +219,29 @@ function changeDate() {
 }
 
 .btn-primary {
-    background-color: var(--supervisor-accent);
-    color: white;
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5568 100%);
+    color: #f5f1e8;
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.18);
 }
 
 .btn-primary:hover {
-    background-color: var(--supervisor-dark);
+    background: linear-gradient(135deg, #3d5568 0%, #1a252f 100%);
     transform: translateY(-2px);
 }
 
 .alert {
     padding: 12px 16px;
     border-radius: 6px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
 .alert-success {
-    background-color: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+    background: linear-gradient(135deg, #d9e8e1 0%, #f5f1e8 100%);
+    color: #2c3e50;
+    border: 1px solid #b7c9bf;
 }
 
 .alert-icon {
@@ -226,6 +250,13 @@ function changeDate() {
 
 .text-muted {
     color: var(--text-muted);
+}
+
+.timetable-container h1,
+.timetable-container h2,
+.timetable-container h3,
+.timetable-container p {
+    color: var(--text-primary);
 }
 
 /* Responsive */
@@ -238,10 +269,18 @@ function changeDate() {
     .view-controls {
         flex-direction: column;
         gap: 16px;
+        align-items: stretch;
     }
     
     .btn {
         width: 100%;
+    }
+
+    .view-tabs,
+    .date-navigation {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
     }
 }
 </style>
