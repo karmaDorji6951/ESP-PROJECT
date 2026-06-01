@@ -26,7 +26,7 @@ class TimetableController extends Controller
         $view = $request->get('view', 'week'); // week, month, day
         $date = $request->get('date', now()->toDateString());
 
-        $query = Timetable::query()->with(['employee', 'assignedBy']);
+        $query = Timetable::query()->with(['employee', 'assignedBy', 'assignedToRole', 'task.latestEvaluation', 'task.evaluation']);
 
         // Apply role-based filtering
         $query->forUser($user);
@@ -77,6 +77,8 @@ class TimetableController extends Controller
     {
         $this->authorizeCreate();
 
+        $requiresEmployee = Auth::user()?->role?->slug === 'supervisor';
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -85,8 +87,8 @@ class TimetableController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'location' => 'nullable|string|max:255',
             'priority' => 'required|in:low,medium,high',
-            'employee_id' => 'nullable|exists:employees,id',
-            'assigned_to_role' => 'nullable|in:admin,supervisor,staff',
+            'employee_id' => [$requiresEmployee ? 'required' : 'nullable', 'exists:employees,id'],
+            'assigned_to_role' => 'nullable|exists:roles,slug',
         ]);
 
         $validated['assigned_by'] = Auth::id();
@@ -120,7 +122,7 @@ class TimetableController extends Controller
             abort(403);
         }
 
-        $timetable->load(['employee', 'assignedBy']);
+        $timetable->load(['employee', 'assignedBy', 'task.latestEvaluation', 'task.evaluation']);
         return view('timetables.show', compact('timetable'));
     }
 
@@ -142,6 +144,8 @@ class TimetableController extends Controller
     {
         $this->authorizeEdit($timetable);
 
+        $requiresEmployee = Auth::user()?->role?->slug === 'supervisor';
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -151,8 +155,8 @@ class TimetableController extends Controller
             'location' => 'nullable|string|max:255',
             'priority' => 'required|in:low,medium,high',
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
-            'employee_id' => 'nullable|exists:employees,id',
-            'assigned_to_role' => 'nullable|in:admin,supervisor,staff',
+            'employee_id' => [$requiresEmployee ? 'required' : 'nullable', 'exists:employees,id'],
+            'assigned_to_role' => 'nullable|exists:roles,slug',
         ]);
 
         $targetEmployeeId = $this->resolveTargetEmployeeId($validated);
@@ -200,7 +204,7 @@ class TimetableController extends Controller
             return response('Invalid date', 400);
         }
 
-        $query = Timetable::query()->with(['employee', 'assignedBy']);
+        $query = Timetable::query()->with(['employee', 'assignedBy', 'assignedToRole', 'task.latestEvaluation', 'task.evaluation']);
         $query->forUser($user);
 
         $dayTimetables = $query->whereDate('date', $date)
@@ -238,7 +242,7 @@ class TimetableController extends Controller
             if ($user->employee && $timetable->employee_id === $user->employee->id) {
                 return true;
             }
-            if ($timetable->assigned_to_role === $user->role->slug) {
+            if ($timetable->assigned_to_role_id && $timetable->assigned_to_role_id === $user->role_id) {
                 return true;
             }
         }
@@ -281,9 +285,11 @@ class TimetableController extends Controller
             'assigned_by' => Auth::id(),
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
+            'assignment_type' => 'date',
             'schedule_start_date' => $validated['date'],
             'schedule_end_date' => $validated['date'],
             'status' => $taskStatus,
+            'deadline' => $validated['date'],
         ];
 
         if ($timetable->task) {

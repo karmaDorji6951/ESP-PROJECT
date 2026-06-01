@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -75,35 +76,43 @@ class LoginController extends Controller
             'password' => $request->password,
         ];
 
-        if (Auth::attempt($authCredentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
+        try {
+            if (Auth::attempt($authCredentials, $request->boolean('remember'))) {
+                $request->session()->regenerate();
 
-            $user = Auth::user();
-            
-            // Ensure role relationship is loaded
-            if (!$user->role) {
-                Auth::logout();
-                $request->session()->invalidate();
-                return back()->withErrors([
-                    'email' => 'User role is not assigned. Please contact administrator.',
-                ])->onlyInput('email');
+                $user = Auth::user();
+                
+                // Ensure role relationship is loaded
+                if (!$user->role) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    return back()->withErrors([
+                        'email' => 'User role is not assigned. Please contact administrator.',
+                    ])->onlyInput('email');
+                }
+
+                $role = $user->role->slug ?? $user->role->name;
+                $role = Str::lower(trim((string) $role));
+
+                $dashboardRoute = match ($role) {
+                    'admin' => 'admin.dashboard',
+                    'supervisor' => 'supervisor.dashboard',
+                    'staff' => 'staff.dashboard',
+                    default => 'dashboard',
+                };
+
+                if (! Route::has($dashboardRoute)) {
+                    $dashboardRoute = 'dashboard';
+                }
+
+                return redirect()->intended(route($dashboardRoute));
             }
+        } catch (QueryException $e) {
+            report($e);
 
-            $role = $user->role->slug ?? $user->role->name;
-            $role = Str::lower(trim((string) $role));
-
-            $dashboardRoute = match ($role) {
-                'admin' => 'admin.dashboard',
-                'supervisor' => 'supervisor.dashboard',
-                'staff' => 'staff.dashboard',
-                default => 'dashboard',
-            };
-
-            if (! Route::has($dashboardRoute)) {
-                $dashboardRoute = 'dashboard';
-            }
-
-            return redirect()->intended(route($dashboardRoute));
+            return back()->withErrors([
+                'email' => 'Authentication database is currently unavailable. Please try again later or contact the administrator.',
+            ])->onlyInput('email');
         }
 
         return back()->withErrors([

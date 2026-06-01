@@ -16,6 +16,7 @@ class Employee extends Model
         'phone',
         'role_title',
         'department',
+        'department_id',
         'dzongkhag_id',
         'gewog_id',
         'address',
@@ -46,6 +47,41 @@ class Employee extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'employee_id');
+    }
+
+    public function departmentRelation()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function getDepartmentAttribute()
+    {
+        // Prefer the related Department name if available, fall back to legacy column value
+        if ($this->relationLoaded('departmentRelation') && $this->departmentRelation) {
+            return $this->departmentRelation->name;
+        }
+
+        if ($this->department_id) {
+            return optional($this->departmentRelation)->name;
+        }
+
+        return $this->attributes['department'] ?? null;
+    }
+
+    public function getAreaAttribute()
+    {
+        return $this->department;
+    }
+
+    public function getBuildingAttribute()
+    {
+        $area = $this->departmentRelation;
+
+        if (! $area) {
+            return null;
+        }
+
+        return $area->parent?->name ?? $area->name;
     }
 
     public function dzongkhag()

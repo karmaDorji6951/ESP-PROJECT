@@ -47,7 +47,7 @@
                         <h6 class="text-muted mb-2">Duration</h6>
                         <p>
                             @if($leave->start_date && $leave->end_date)
-                                {{ $leave->start_date->diffInDays($leave->end_date) + 1 }} days
+                                {{ \App\Models\LeaveRequest::workingDaysBetween($leave->start_date, $leave->end_date) }} days
                             @else
                                 Not specified
                             @endif

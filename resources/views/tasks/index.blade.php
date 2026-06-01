@@ -45,7 +45,7 @@
         <small class="text-muted">{{ $canManage ? 'Supervisor/Admin view' : 'My timetable view' }}</small>
     </div>
     @if($canManage)
-        <a href="{{ route('tasks.create') }}" class="btn btn-primary">Assign Work</a>
+        <a href="{{ route('timetables.create') }}" class="btn btn-primary">Assign Work</a>
     @endif
 </div>
 

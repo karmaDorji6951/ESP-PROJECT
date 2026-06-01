@@ -13,7 +13,7 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::with('employee', 'assigner')
+        $tasks = Task::with('employee', 'assigner', 'latestSubmission', 'evaluation')
             ->where('assigned_by', auth()->id())
             ->latest()
             ->paginate(15);
@@ -39,19 +39,15 @@ class TaskController extends Controller
 
     public function create()
     {
-        $departments = Employee::query()
-            ->whereNotNull('department')
-            ->where('department', '!=', '')
-            ->distinct()
-            ->orderBy('department')
-            ->pluck('department');
+        $departments = \App\Models\Department::with('children')
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
 
-        $employeesQuery = Employee::query()->orderBy('name');
+        $employeesQuery = Employee::with('departmentRelation.parent')->orderBy('name');
 
-        if ($departments->isNotEmpty()) {
-            $employeesQuery
-                ->whereNotNull('department')
-                ->where('department', '!=', '');
+        if (Employee::query()->whereNotNull('department_id')->exists()) {
+            $employeesQuery->whereNotNull('department_id');
         }
 
         $employees = $employeesQuery->get();
@@ -62,8 +58,7 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $hasDepartments = Employee::query()
-            ->whereNotNull('department')
-            ->where('department', '!=', '')
+            ->whereNotNull('department_id')
             ->exists();
 
         $department = $request->input('department');
@@ -71,11 +66,11 @@ class TaskController extends Controller
 
         if (! empty($department)) {
             $employeeExistsRule = Rule::exists('employees', 'id')
-                ->where(fn ($query) => $query->where('department', $department));
+                ->where(fn ($query) => $query->where('department_id', $department));
         }
 
         $validated = $request->validate([
-            'department' => $hasDepartments ? 'required|string' : 'nullable|string',
+            'department' => $hasDepartments ? 'required|integer|exists:departments,id' : 'nullable',
             'employee_id' => ['required', $employeeExistsRule],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -85,17 +80,32 @@ class TaskController extends Controller
 
         unset($validated['department']);
 
+        $scheduleDate = ($validated['deadline'] ?? null)
+            ? \Carbon\Carbon::parse($validated['deadline'])->toDateString()
+            : now()->toDateString();
+
         $validated['assigned_by'] = auth()->id();
+        $validated['assignment_type'] = 'date';
+        $validated['schedule_start_date'] = $scheduleDate;
+        $validated['schedule_end_date'] = $scheduleDate;
+        $validated['deadline'] = $validated['deadline'] ?? $scheduleDate;
+
         $task = Task::create($validated);
 
+        $timetableStatus = match ($validated['status']) {
+            'Completed' => 'completed',
+            'In Progress' => 'in_progress',
+            default => 'scheduled',
+        };
+
         // Create corresponding timetable entry
-        $timetable = Timetable::create([
+        Timetable::create([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'date' => $validated['deadline'] ?? now()->toDateString(),
+            'date' => $scheduleDate,
             'start_time' => '09:00',
             'end_time' => '17:00',
-            'status' => 'scheduled',
+            'status' => $timetableStatus,
             'priority' => 'medium',
             'employee_id' => $validated['employee_id'],
             'assigned_by' => auth()->id(),
@@ -107,24 +117,20 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        $departments = Employee::query()
-            ->whereNotNull('department')
-            ->where('department', '!=', '')
-            ->distinct()
-            ->orderBy('department')
-            ->pluck('department');
+        $departments = \App\Models\Department::with('children')
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
 
-        $employeesQuery = Employee::query()->orderBy('name');
+        $employeesQuery = Employee::with('departmentRelation.parent')->orderBy('name');
 
-        if ($departments->isNotEmpty()) {
-            $employeesQuery
-                ->whereNotNull('department')
-                ->where('department', '!=', '');
+        if (Employee::query()->whereNotNull('department_id')->exists()) {
+            $employeesQuery->whereNotNull('department_id');
         }
 
         $employees = $employeesQuery->get();
 
-        $task->loadMissing('employee');
+        $task->loadMissing('employee.departmentRelation.parent');
 
         return view('supervisor.tasks.edit', compact('task', 'employees', 'departments'));
     }
@@ -132,8 +138,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $hasDepartments = Employee::query()
-            ->whereNotNull('department')
-            ->where('department', '!=', '')
+            ->whereNotNull('department_id')
             ->exists();
 
         $department = $request->input('department');
@@ -141,11 +146,11 @@ class TaskController extends Controller
 
         if (! empty($department)) {
             $employeeExistsRule = Rule::exists('employees', 'id')
-                ->where(fn ($query) => $query->where('department', $department));
+                ->where(fn ($query) => $query->where('department_id', $department));
         }
 
         $validated = $request->validate([
-            'department' => $hasDepartments ? 'required|string' : 'nullable|string',
+            'department' => $hasDepartments ? 'required|integer|exists:departments,id' : 'nullable',
             'employee_id' => ['required', $employeeExistsRule],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -154,6 +159,15 @@ class TaskController extends Controller
         ]);
 
         unset($validated['department']);
+
+        $scheduleDate = ($validated['deadline'] ?? null)
+            ? \Carbon\Carbon::parse($validated['deadline'])->toDateString()
+            : ($task->schedule_start_date ? $task->schedule_start_date->toDateString() : now()->toDateString());
+
+        $validated['assignment_type'] = $task->assignment_type ?: 'date';
+        $validated['schedule_start_date'] = $scheduleDate;
+        $validated['schedule_end_date'] = $scheduleDate;
+        $validated['deadline'] = $validated['deadline'] ?? $scheduleDate;
 
         $task->update($validated);
 
@@ -168,7 +182,7 @@ class TaskController extends Controller
             $task->timetable->update([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
-                'date' => $validated['deadline'] ?? now()->toDateString(),
+                'date' => $scheduleDate,
                 'status' => $timetableStatus,
                 'employee_id' => $validated['employee_id'],
             ]);

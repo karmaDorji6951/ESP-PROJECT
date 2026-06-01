@@ -3,14 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\TaskSubmission;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class TaskSubmittedNotification extends Notification implements ShouldQueue
+class TaskSubmittedNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(public TaskSubmission $submission) {}
 
     public function via(object $notifiable): array

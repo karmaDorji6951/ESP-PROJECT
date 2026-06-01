@@ -16,6 +16,29 @@ use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
+    public function show(Task $task)
+    {
+        $user = auth()->user();
+        $role = $user?->role?->slug ?? strtolower((string) $user?->role?->name);
+
+        if ($role === 'staff') {
+            abort_unless($task->employee_id === $user?->employee_id, 403);
+        } elseif (! in_array($role, ['admin', 'supervisor'], true)) {
+            abort(403);
+        }
+
+        $task->load([
+            'employee.user',
+            'assigner',
+            'timetable.employee',
+            'latestSubmission.submitter',
+            'latestEvaluation',
+            'evaluation',
+        ]);
+
+        return view('tasks.show', compact('task'));
+    }
+
     public function index(Request $request)
     {
         $month = $request->string('month')->toString() ?: now()->format('Y-m');
@@ -94,10 +117,17 @@ class TaskController extends Controller
         ]);
 
         // Load relationships for notification
-        $task->load('employee', 'assigner');
+        $task->load('employee.user', 'assigner');
 
         // Dispatch event to notify employee
-        TaskAssigned::dispatch($task);
+        try {
+            TaskAssigned::dispatch($task);
+        } catch (\Throwable $e) {
+            \Log::warning('TaskAssigned event dispatch failed', [
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return redirect()->route('tasks.index')->with('success', 'Timetable work assigned successfully.');
     }
@@ -220,7 +250,15 @@ class TaskController extends Controller
         $submission->load('task.assigner', 'submitter');
 
         // Dispatch event to notify supervisor
-        TaskSubmitted::dispatch($submission);
+        try {
+            TaskSubmitted::dispatch($submission);
+        } catch (\Throwable $e) {
+            \Log::warning('TaskSubmitted event dispatch failed', [
+                'submission_id' => $submission->id,
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -255,10 +293,17 @@ class TaskController extends Controller
         }
 
         // Load relationships for event broadcasting
-        $task->load('employee:id,name', 'assigner:id,name');
+        $task->load('employee.user', 'assigner:id,name');
 
         // Dispatch event to notify employee
-        TaskAssigned::dispatch($task);
+        try {
+            TaskAssigned::dispatch($task);
+        } catch (\Throwable $e) {
+            \Log::warning('TaskAssigned event dispatch failed', [
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,

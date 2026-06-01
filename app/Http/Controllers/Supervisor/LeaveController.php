@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Supervisor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +17,6 @@ class LeaveController extends Controller
         $this->markLeaveRequestNotificationsAsRead();
 
         $leaves = LeaveRequest::with('employee', 'user')
-            ->where('status', 'Pending')
             ->latest()
             ->paginate(15);
         
@@ -43,6 +44,8 @@ class LeaveController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
+        $wasApproved = $leaf->status === 'Approved';
+
         $leaf->update([
             'status' => $validated['status'],
             'remarks' => $validated['remarks'],
@@ -50,11 +53,82 @@ class LeaveController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        if ($validated['status'] === 'Approved') {
+            $this->syncAttendanceForApprovedLeave($leaf);
+        } elseif ($wasApproved) {
+            $this->removeAttendanceForLeave($leaf);
+        }
+
         // Notify the staff member about the decision
         $this->notifyStaff($leaf, Auth::user(), $validated['status']);
 
         return redirect()->route('supervisor.leaves.index')
             ->with('success', "Leave request {$validated['status']} successfully.");
+    }
+
+    private function syncAttendanceForApprovedLeave(LeaveRequest $leaf): void
+    {
+        $employeeId = $leaf->employee_id ?? $leaf->user?->employee_id;
+        if (! $employeeId || ! $leaf->start_date || ! $leaf->end_date) {
+            return;
+        }
+
+        $start = Carbon::parse($leaf->start_date)->startOfDay();
+        $end = Carbon::parse($leaf->end_date)->startOfDay();
+        if ($start->gt($end)) {
+            return;
+        }
+
+        $markerId = Auth::id();
+        $remarksPrefix = 'Auto: Approved leave';
+        $remarks = $leaf->leave_type ? "{$remarksPrefix} ({$leaf->leave_type})" : $remarksPrefix;
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            Attendance::updateOrCreate(
+                [
+                    'employee_id' => $employeeId,
+                    'attendance_date' => $date->toDateString(),
+                ],
+                [
+                    'status' => 'Leave',
+                    'remarks' => $remarks,
+                    'marked_by' => $markerId,
+                ]
+            );
+        }
+    }
+
+    private function removeAttendanceForLeave(LeaveRequest $leaf): void
+    {
+        $employeeId = $leaf->employee_id ?? $leaf->user?->employee_id;
+        if (! $employeeId || ! $leaf->start_date || ! $leaf->end_date) {
+            return;
+        }
+
+        $start = Carbon::parse($leaf->start_date)->startOfDay();
+        $end = Carbon::parse($leaf->end_date)->startOfDay();
+        if ($start->gt($end)) {
+            return;
+        }
+
+        $remarksPrefix = 'Auto: Approved leave';
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            Attendance::query()
+                ->where('employee_id', $employeeId)
+                ->whereDate('attendance_date', $date->toDateString())
+                ->where('status', 'Leave')
+                ->where('remarks', 'like', $remarksPrefix . '%')
+                ->delete();
+        }
     }
 
     private function notifyStaff(LeaveRequest $leaf, User $supervisor, string $status)

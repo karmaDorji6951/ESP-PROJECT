@@ -12,16 +12,36 @@
             @csrf
             @method('PUT')
 
-            <!-- Department Selection -->
-            <div class="col-12">
-                <label for="department" class="form-label">Select Department {{ ($departments ?? collect())->isNotEmpty() ? '*' : '' }}</label>
-                <select name="department" id="department" class="form-select @error('department') is-invalid @enderror" {{ ($departments ?? collect())->isNotEmpty() ? 'required' : '' }}>
-                    <option value="">-- Choose a department --</option>
-                    @foreach(($departments ?? collect()) as $department)
-                        <option value="{{ $department }}" {{ old('department', $task->employee->department ?? '') === $department ? 'selected' : '' }}>
-                            {{ $department }}
-                        </option>
+            @php
+                $selectedAreaId = old('department', $task->employee->department_id ?? null);
+                $selectedBuildingId = old('building_id', $task->employee->departmentRelation?->parent_id ?? $task->employee->department_id ?? null);
+                $buildingsForScript = ($departments ?? collect())->map(function ($building) {
+                    return [
+                        'id' => $building->id,
+                        'name' => $building->name,
+                        'areas' => $building->children->isNotEmpty()
+                            ? $building->children->map(fn ($area) => ['id' => $area->id, 'name' => $area->name])->values()
+                            : collect([['id' => $building->id, 'name' => $building->name]]),
+                    ];
+                })->values();
+            @endphp
+
+            <!-- Building Selection -->
+            <div class="col-md-6">
+                <label for="building_id" class="form-label">Select Building {{ ($departments ?? collect())->isNotEmpty() ? '*' : '' }}</label>
+                <select name="building_id" id="building_id" class="form-select">
+                    <option value="">-- Choose a building --</option>
+                    @foreach(($departments ?? collect()) as $building)
+                        <option value="{{ $building->id }}" {{ (string) $selectedBuildingId === (string) $building->id ? 'selected' : '' }}>{{ $building->name }}</option>
                     @endforeach
+                </select>
+            </div>
+
+            <!-- Area Selection -->
+            <div class="col-md-6">
+                <label for="department" class="form-label">Select Area {{ ($departments ?? collect())->isNotEmpty() ? '*' : '' }}</label>
+                <select name="department" id="department" class="form-select @error('department') is-invalid @enderror" {{ ($departments ?? collect())->isNotEmpty() ? 'required' : '' }}>
+                    <option value="">-- Choose an area --</option>
                 </select>
                 @error('department')
                 <span class="text-danger">{{ $message }}</span>
@@ -34,8 +54,8 @@
                 <select name="employee_id" id="employee_id" class="form-select @error('employee_id') is-invalid @enderror" required>
                     <option value="">-- Choose an employee --</option>
                     @foreach($employees as $employee)
-                    <option value="{{ $employee->id }}" data-department="{{ $employee->department }}" {{ old('employee_id', $task->employee_id) == $employee->id ? 'selected' : '' }}>
-                        {{ $employee->name }} ({{ $employee->department }})
+                    <option value="{{ $employee->id }}" data-department-id="{{ $employee->department_id }}" {{ old('employee_id', $task->employee_id) == $employee->id ? 'selected' : '' }}>
+                        {{ $employee->name }} ({{ $employee->area ?? 'No area' }})
                     </option>
                     @endforeach
                 </select>
@@ -101,12 +121,33 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const buildings = @json($buildingsForScript);
+    const selectedAreaId = @json((string) $selectedAreaId);
+    const buildingSelect = document.getElementById('building_id');
     const departmentSelect = document.getElementById('department');
     const employeeSelect = document.getElementById('employee_id');
 
-    if (!departmentSelect || !employeeSelect) {
+    if (!buildingSelect || !departmentSelect || !employeeSelect) {
         return;
     }
+
+    const refreshAreas = () => {
+        const selectedArea = departmentSelect.dataset.selected || selectedAreaId;
+        const building = buildings.find(item => String(item.id) === String(buildingSelect.value));
+        departmentSelect.innerHTML = '<option value="">-- Choose an area --</option>';
+
+        if (!building) {
+            return;
+        }
+
+        building.areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.id;
+            option.textContent = area.name;
+            option.selected = String(area.id) === String(selectedArea);
+            departmentSelect.appendChild(option);
+        });
+    };
 
     const applyEmployeeFilter = () => {
         const selectedDepartment = departmentSelect.value;
@@ -116,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return; // placeholder
             }
 
-            const optionDepartment = option.dataset.department || '';
+            const optionDepartment = option.dataset.departmentId || '';
             const shouldShow = !selectedDepartment || optionDepartment === selectedDepartment;
 
             option.hidden = !shouldShow;
@@ -129,7 +170,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    departmentSelect.addEventListener('change', applyEmployeeFilter);
+    buildingSelect.addEventListener('change', function () {
+        departmentSelect.dataset.selected = '';
+        refreshAreas();
+        applyEmployeeFilter();
+    });
+
+    departmentSelect.addEventListener('change', function () {
+        departmentSelect.dataset.selected = this.value;
+        applyEmployeeFilter();
+    });
+
+    refreshAreas();
     applyEmployeeFilter();
 });
 </script>

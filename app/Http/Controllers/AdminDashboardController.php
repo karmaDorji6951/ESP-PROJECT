@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Models\Role;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -32,10 +33,30 @@ class AdminDashboardController extends Controller
 
         $recentUsers = User::with('role')->latest()->limit(8)->get();
         $recentEmployees = Employee::latest()->limit(8)->get();
-        $recentAttendance = Attendance::with('employee')->latest('attendance_date')->limit(8)->get();
-        $recentTasks = Task::with('employee')->latest()->limit(8)->get();
         $recentLeaves = LeaveRequest::with('employee', 'user')->latest()->limit(8)->get();
+        $evaluationTaskGroups = Role::query()
+            ->orderBy('name')
+            ->get()
+            ->map(function (Role $role) {
+                $tasks = Task::with(['employee.user.role', 'assigner'])
+                    ->where('status', 'Completed')
+                    ->whereHas('employee.user.role', function ($query) use ($role) {
+                        $query->whereKey($role->id);
+                    })
+                    ->latest()
+                    ->limit(10)
+                    ->get();
 
-        return view('admin.dashboard', compact('summary', 'recentUsers', 'recentEmployees', 'recentAttendance', 'recentTasks', 'recentLeaves'));
+                return [
+                    'role' => $role,
+                    'tasks' => $tasks,
+                ];
+            })
+            ->filter(fn (array $group) => $group['tasks']->isNotEmpty())
+            ->values();
+
+        $selectedEvaluationTask = $evaluationTaskGroups->first()['tasks']->first() ?? null;
+
+        return view('admin.dashboard', compact('summary', 'recentUsers', 'recentEmployees', 'recentLeaves', 'evaluationTaskGroups', 'selectedEvaluationTask'));
     }
 }

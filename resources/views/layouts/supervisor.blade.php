@@ -514,6 +514,18 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('evaluations.index') }}" class="menu-item {{ request()->routeIs('evaluations.index') ? 'active' : '' }}">
+                        <span class="menu-icon">📋</span>
+                        <span class="menu-label">Reviewed</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('evaluations.create') }}" class="menu-item {{ request()->routeIs('evaluations.create') ? 'active' : '' }}">
+                        <span class="menu-icon">✍️</span>
+                        <span class="menu-label">Evaluations</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('profile.show') }}" class="menu-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                         <span class="menu-icon">👤</span>
                         <span class="menu-label">Profile</span>

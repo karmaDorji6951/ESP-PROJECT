@@ -82,6 +82,43 @@
                     </div>
                 </div>
             </div>
+
+            @if($timetable->task && $timetable->task->reviewed_evaluation)
+                <div class="detail-section evaluation-section">
+                    <h3>Evaluation Result</h3>
+                    <div class="evaluation-card">
+                        <div class="evaluation-pill"><span class="reviewed-icon">✓</span> Reviewed Task</div>
+                        <div class="evaluation-stats">
+                            <div><span>Rating:</span> <strong>{{ $timetable->task->reviewed_evaluation->rating }}/5</strong></div>
+                            <div><span>Grade:</span> <strong>{{ $timetable->task->reviewed_evaluation->grade }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($timetable->task)
+                <div class="detail-section">
+                    <h3>Linked Task</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Title</label>
+                            <value>{{ $timetable->task->title }}</value>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <value>{{ $timetable->task->status }}</value>
+                        </div>
+                        <div class="detail-item">
+                            <label>Deadline</label>
+                            <value>{{ $timetable->task->deadline?->format('Y-m-d') ?? 'No deadline' }}</value>
+                        </div>
+                        <div class="detail-item">
+                            <label>Task Page</label>
+                            <value><a href="{{ route('tasks.show', $timetable->task) }}">Open task details</a></value>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="sidebar-details">
@@ -90,7 +127,7 @@
                 <div class="action-list">
                     <a href="{{ route('timetables.index') }}" class="action-item">
                         <span class="action-icon">📅</span>
-                        <span>Back to Timetable</span>
+                        <span>Back to Schedule</span>
                     </a>
                     @if(auth()->user()->role->slug === 'admin' || auth()->user()->role->slug === 'supervisor')
                         <a href="{{ route('timetables.edit', $timetable) }}" class="action-item">
@@ -283,6 +320,56 @@
     line-height: 1.6;
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+.evaluation-section .evaluation-card {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #86efac;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.10);
+}
+
+.evaluation-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.reviewed-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.evaluation-stats {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    color: var(--text-primary);
+}
+
+.evaluation-stats span {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
 .sidebar-details {

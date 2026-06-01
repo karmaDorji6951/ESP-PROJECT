@@ -53,18 +53,30 @@ class ProfileController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo_mode' => 'nullable|in:photo,plain',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
+        $photoMode = $validated['photo_mode'] ?? 'photo';
+
+        // Handle photo removal when the plain/default avatar is selected
+        if ($photoMode === 'plain') {
+            if ($user->photo_path) {
+                Storage::disk('public')->delete($user->photo_path);
+            }
+
+            $validated['photo_path'] = null;
+        }
+
         // Handle photo upload
-        if ($request->hasFile('photo')) {
+        if ($photoMode !== 'plain' && $request->hasFile('photo')) {
             // Delete old photo if exists
-            if ($user->photo_path && Storage::disk('public')->exists($user->photo_path)) {
+            if ($user->photo_path) {
                 Storage::disk('public')->delete($user->photo_path);
             }
 
             // Store new photo
-            $photoPath = $request->file('photo')->store('profiles', 'public');
+            $photoPath = $request->file('photo')->store('profile_pictures', 'public');
             $validated['photo_path'] = $photoPath;
         }
 
@@ -92,17 +104,54 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo_mode' => 'nullable|in:photo,plain',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        if ($user->photo_path && Storage::disk('public')->exists($user->photo_path)) {
+        if ($request->input('photo_mode') === 'plain') {
+            if ($user->photo_path) {
+                Storage::disk('public')->delete($user->photo_path);
+            }
+
+            $user->update([
+                'photo_path' => null,
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile photo removed successfully.',
+                    'photo_url' => null,
+                ]);
+            }
+
+            return redirect()->route('profile.show')
+                ->with('success', 'Profile photo removed successfully.');
+        }
+
+        if (!$request->hasFile('photo')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please choose a photo or select the plain profile option.',
+            ], 422);
+        }
+
+        if ($user->photo_path) {
             Storage::disk('public')->delete($user->photo_path);
         }
 
-        $photoPath = $request->file('photo')->store('profiles', 'public');
+        $photoPath = $request->file('photo')->store('profile_pictures', 'public');
         $user->update([
             'photo_path' => $photoPath,
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile photo updated successfully.',
+                'photo_url' => $user->photo_url,
+            ]);
+        }
 
         return redirect()->route('profile.show')
             ->with('success', 'Profile photo updated successfully.');

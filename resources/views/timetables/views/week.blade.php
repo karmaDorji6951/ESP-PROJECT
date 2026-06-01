@@ -25,7 +25,7 @@
                 $lowPriorityCount = $dayTimetables->where('priority', 'low')->count();
             @endphp
 
-            <div class="day-cell-simple {{ $currentDate->isToday() ? 'today' : '' }}" 
+            <div class="day-cell-simple {{ $currentDate->isToday() ? 'today' : '' }} {{ $dayTimetables->contains(fn ($timetable) => $timetable->task && $timetable->task->reviewed_evaluation) ? 'has-reviewed' : '' }}" 
                  onclick="showDayDetails('{{ $currentDate->format('Y-m-d') }}')"
                  style="cursor: pointer;">
                 <div class="day-header-simple">
@@ -53,9 +53,21 @@
                         
                         <div class="task-preview">
                             @foreach($dayTimetables->take(2) as $timetable)
-                                <div class="task-item">
+                                @php $taskUrl = $timetable->task ? route('tasks.show', $timetable->task) : route('timetables.show', $timetable); @endphp
+                                <div
+                                    class="task-item task-item-clickable"
+                                    onclick="window.location.href='{{ $taskUrl }}'"
+                                    role="link"
+                                    tabindex="0"
+                                    onkeydown="if(event.key==='Enter'||event.key===' '){ event.preventDefault(); window.location.href='{{ $taskUrl }}'; }"
+                                >
                                     <span class="task-time">{{ $timetable->start_time->format('H:i') }}</span>
-                                    <span class="task-title">{{ Str::limit($timetable->title, 15) }}</span>
+                                    <span class="task-title">
+                                        {{ Str::limit($timetable->title, 15) }}
+                                        @if($timetable->task && $timetable->task->reviewed_evaluation)
+                                            <small class="task-evaluation">· Reviewed {{ $timetable->task->reviewed_evaluation->grade }} / {{ $timetable->task->reviewed_evaluation->rating }}/5</small>
+                                        @endif
+                                    </span>
                                 </div>
                             @endforeach
                             @if($taskCount > 2)
@@ -76,7 +88,7 @@
         <div class="empty-state">
             <div class="empty-icon"><i class="bi bi-calendar-week"></i></div>
             <div class="empty-title">No schedules in this period</div>
-            <div class="empty-description">No timetable entries found for these two weeks</div>
+            <div class="empty-description">No schedule entries found for these two weeks</div>
             @if($canCreate)
                 <a href="{{ route('timetables.create') }}?date={{ $date }}" class="btn btn-primary">
                     Add Schedule for This Week
@@ -176,17 +188,11 @@ document.addEventListener('DOMContentLoaded', function() {
     --success: #5a8a7a;
     --warning: #d4c4a8;
     --danger: #a85a5a;
-    background-color: var(--bg-primary);
-    border-radius: 10px;
+    background: var(--bg-primary);
     border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(44, 62, 80, 0.06);
     overflow: hidden;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.06);
-}
-
-.week-view {
-    color: var(--text-primary);
 }
 
 .week-header {
@@ -207,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
     background-color: var(--border-color);
+    border-top: 1px solid var(--border-color);
     border-radius: 0 0 10px 10px;
     overflow: hidden;
 }
@@ -215,6 +222,8 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: var(--bg-primary);
     min-height: 180px;
     padding: 14px;
+    outline: 1px solid rgba(212, 196, 168, 0.75);
+    outline-offset: -1px;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
@@ -230,6 +239,11 @@ document.addEventListener('DOMContentLoaded', function() {
 .day-cell-simple.today {
     background: linear-gradient(135deg, #eef4f8 0%, #f5f1e8 100%);
     box-shadow: inset 0 0 0 2px rgba(44, 62, 80, 0.9);
+}
+
+.day-cell-simple.has-reviewed {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f5fffa 100%);
+    box-shadow: inset 0 0 0 2px rgba(22, 163, 74, 0.45);
 }
 
 .day-header-simple {
@@ -273,6 +287,10 @@ document.addEventListener('DOMContentLoaded', function() {
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
+}
+
+.day-cell-simple.has-reviewed .count-badge {
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
 }
 
 .priority-indicators {
@@ -331,6 +349,20 @@ document.addEventListener('DOMContentLoaded', function() {
     white-space: nowrap;
 }
 
+.task-item-clickable {
+    cursor: pointer;
+}
+
+.task-item-clickable:hover {
+    background: rgba(44, 62, 80, 0.08);
+}
+
+.task-evaluation {
+    color: #15803d;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .more-tasks {
     font-size: 9px;
     color: var(--text-muted);
@@ -349,6 +381,18 @@ document.addEventListener('DOMContentLoaded', function() {
     color: var(--text-muted);
     font-size: 12px;
     font-style: italic;
+}
+
+.evaluation-indicator {
+    margin-top: 6px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #166534;
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    text-align: center;
 }
 
 /* Modal Styles */

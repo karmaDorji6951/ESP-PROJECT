@@ -4,10 +4,15 @@
 @section('topbar_title', 'Add New Schedule')
 
 @section('content')
+@php
+    $defaultStartTime = now();
+    $defaultEndTime = $defaultStartTime->copy()->addHour();
+    $defaultEndValue = $defaultEndTime->isSameDay($defaultStartTime) ? $defaultEndTime->format('H:i') : '23:59';
+@endphp
 <div class="timetable-form-container">
     <div class="form-header">
         <h1>Add New Schedule</h1>
-        <p class="text-muted">Create a new timetable entry</p>
+        <p class="text-muted">Create a new schedule entry</p>
     </div>
 
     <div class="form-wrapper">
@@ -28,9 +33,9 @@
                     <label for="priority" class="form-label">Priority *</label>
                     <select id="priority" name="priority" class="form-control" required>
                         <option value="">Select Priority</option>
-                        <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
-                        <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
+                        <option value="low" {{ old('priority', 'medium') == 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ old('priority', 'medium') == 'high' ? 'selected' : '' }}>High</option>
                     </select>
                     @error('priority')
                         <span class="error-message">{{ $message }}</span>
@@ -46,31 +51,20 @@
                 @enderror
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="date" class="form-label">Date *</label>
-                    <input type="date" id="date" name="date" class="form-control" 
-                           value="{{ old('date', request('date')) }}" required>
-                    @error('date')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="location" class="form-label">Location</label>
-                    <input type="text" id="location" name="location" class="form-control" 
-                           value="{{ old('location') }}" placeholder="e.g., Main Hall, Room 101">
-                    @error('location')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
+            <div class="form-group">
+                <label for="date" class="form-label">Date *</label>
+                      <input type="date" id="date" name="date" class="form-control" 
+                          value="{{ old('date', request('date', now()->toDateString())) }}" required>
+                @error('date')
+                    <span class="error-message">{{ $message }}</span>
+                @enderror
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="start_time" class="form-label">Start Time *</label>
-                    <input type="time" id="start_time" name="start_time" class="form-control" 
-                           value="{{ old('start_time') }}" required>
+                          <input type="time" id="start_time" name="start_time" class="form-control" 
+                              value="{{ old('start_time', $defaultStartTime->format('H:i')) }}" required>
                     @error('start_time')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
@@ -78,8 +72,8 @@
 
                 <div class="form-group">
                     <label for="end_time" class="form-label">End Time *</label>
-                    <input type="time" id="end_time" name="end_time" class="form-control" 
-                           value="{{ old('end_time') }}" required>
+                          <input type="time" id="end_time" name="end_time" class="form-control" 
+                              value="{{ old('end_time', $defaultEndValue) }}" required>
                     @error('end_time')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
@@ -87,10 +81,13 @@
             </div>
 
             <div class="form-row">
+                @php
+                    $employeeRequired = auth()->user()?->role?->slug === 'supervisor';
+                @endphp
                 <div class="form-group">
-                    <label for="employee_id" class="form-label">Assign to Employee</label>
-                    <select id="employee_id" name="employee_id" class="form-control">
-                        <option value="">Select Employee (Optional)</option>
+                    <label for="employee_id" class="form-label">Assign to Employee{{ $employeeRequired ? ' *' : '' }}</label>
+                    <select id="employee_id" name="employee_id" class="form-control" @required($employeeRequired)>
+                        <option value="">{{ $employeeRequired ? 'Select Employee' : 'Select Employee (Optional)' }}</option>
                         @foreach($employees as $employee)
                             <option value="{{ $employee->id }}" {{ old('employee_id') == $employee->id ? 'selected' : '' }}>
                                 {{ $employee->name }}
@@ -102,18 +99,7 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="assigned_to_role" class="form-label">Assign to Role</label>
-                    <select id="assigned_to_role" name="assigned_to_role" class="form-control">
-                        <option value="">Select Role (Optional)</option>
-                        <option value="admin" {{ old('assigned_to_role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="supervisor" {{ old('assigned_to_role') == 'supervisor' ? 'selected' : '' }}>Supervisor</option>
-                        <option value="staff" {{ old('assigned_to_role') == 'staff' ? 'selected' : '' }}>Staff</option>
-                    </select>
-                    @error('assigned_to_role')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
+                <!-- Assign to Role removed to simplify scheduling UI -->
             </div>
 
             <div class="form-actions">
@@ -126,21 +112,28 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const hasOldStartTime = @json(old('start_time') !== null);
+    const startTimeInput = document.getElementById('start_time');
+    const endTimeInput = document.getElementById('end_time');
+
+    function formatTime(date) {
+        return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+    }
+
+    if (!hasOldStartTime && startTimeInput && endTimeInput) {
+        const now = new Date();
+        const end = new Date(now.getTime() + 60 * 60 * 1000);
+        startTimeInput.value = formatTime(now);
+        endTimeInput.value = formatTime(end);
+    }
+
+    // keep employee-only selection behavior; role field removed
     const employeeSelect = document.getElementById('employee_id');
-    const roleSelect = document.getElementById('assigned_to_role');
-    
-    // Prevent selecting both employee and role
-    employeeSelect.addEventListener('change', function() {
-        if (this.value) {
-            roleSelect.value = '';
-        }
-    });
-    
-    roleSelect.addEventListener('change', function() {
-        if (this.value) {
-            employeeSelect.value = '';
-        }
-    });
+    if (employeeSelect) {
+        employeeSelect.addEventListener('change', function() {
+            // no-op placeholder for future logic
+        });
+    }
 });
 </script>
 @endsection

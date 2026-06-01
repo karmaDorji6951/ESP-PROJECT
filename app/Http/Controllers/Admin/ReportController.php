@@ -8,24 +8,25 @@ use App\Models\User;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\Attendance;
+use App\Models\Evaluation;
 use App\Models\LeaveRequest;
 use App\Models\Timetable;
+use App\Models\TaskEvaluation;
 use Carbon\Carbon;
 use DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Department;
 
 class ReportController extends Controller
 {
     public function index()
     {
         $user = auth()->user();
-        $departments = Employee::query()
-            ->whereNotNull('department')
-            ->where('department', '!=', '')
-            ->distinct()
-            ->orderBy('department')
-            ->pluck('department');
+        $departments = Department::with('children')
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
 
         $employees = Employee::query()
             ->with('user')
@@ -43,7 +44,7 @@ class ReportController extends Controller
             'start_date' => 'required_if:date_range,custom|date',
             'end_date' => 'required_if:date_range,custom|date|after_or_equal:start_date',
             'format' => 'required|string|in:pdf,excel',
-            'department' => 'nullable|string',
+            'department' => 'nullable|integer|exists:departments,id',
             'employee_id' => 'nullable|integer|exists:employees,id'
         ]);
 
@@ -135,8 +136,9 @@ class ReportController extends Controller
             ->whereBetween('attendance_date', [$dates['start'], $dates['end']]);
 
         if ($department) {
-            $query->whereHas('employee', function ($q) use ($department) {
-                $q->where('department', $department);
+            $deptIds = Department::query()->where('id', $department)->orWhere('parent_id', $department)->pluck('id')->toArray();
+            $query->whereHas('employee', function ($q) use ($deptIds) {
+                $q->whereIn('department_id', $deptIds);
             });
         }
 
@@ -262,8 +264,9 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$dates['start'], $dates['end']]);
 
         if ($department) {
-            $query->whereHas('employee', function ($q) use ($department) {
-                $q->where('department', $department);
+            $deptIds = Department::query()->where('id', $department)->orWhere('parent_id', $department)->pluck('id')->toArray();
+            $query->whereHas('employee', function ($q) use ($deptIds) {
+                $q->whereIn('department_id', $deptIds);
             });
         }
 
@@ -314,8 +317,9 @@ class ReportController extends Controller
             ->whereBetween('start_date', [$dates['start'], $dates['end']]);
 
         if ($department) {
-            $query->whereHas('employee', function ($q) use ($department) {
-                $q->where('department', $department);
+            $deptIds = Department::query()->where('id', $department)->orWhere('parent_id', $department)->pluck('id')->toArray();
+            $query->whereHas('employee', function ($q) use ($deptIds) {
+                $q->whereIn('department_id', $deptIds);
             });
         }
 
@@ -360,11 +364,11 @@ class ReportController extends Controller
 
     private function getPerformanceReport($dates, $department = null, $employeeId = null)
     {
-        $query = Employee::with(['user', 'tasks', 'attendances'])
+        $query = Employee::with(['user'])
             ->whereHas('user');
 
         if ($department) {
-            $query->where('department', $department);
+            $query->where('department_id', $department);
         }
 
         if ($employeeId) {
@@ -373,23 +377,154 @@ class ReportController extends Controller
 
         $employees = $query->get();
 
-        $performanceData = $employees->map(function ($employee) use ($dates) {
-            $tasks = $employee->tasks()
-                ->whereBetween('created_at', [$dates['start'], $dates['end']])
-                ->get();
-            
-            $attendances = $employee->attendances()
-                ->whereBetween('attendance_date', [$dates['start'], $dates['end']])
-                ->get();
+        $employeeIds = $employees->pluck('id')->values();
+        if ($employeeIds->isEmpty()) {
+            return [
+                'title' => 'Performance Report',
+                'summary' => [
+                    'total_employees' => 0,
+                    'period' => $dates['label'],
+                ],
+                'data' => [],
+            ];
+        }
 
-            $totalTasks = $tasks->count();
-            $completedTasks = $tasks->where('status', 'Completed')->count();
-            $totalAttendance = $attendances->count();
-            $presentDays = $attendances->where('status', 'Present')->count();
+        $tasks = Task::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereBetween('created_at', [$dates['start'], $dates['end']])
+            ->get(['id', 'employee_id', 'status']);
+
+        $taskStats = $tasks
+            ->groupBy('employee_id')
+            ->map(function ($employeeTasks) {
+                $total = $employeeTasks->count();
+                $completed = $employeeTasks->where('status', 'Completed')->count();
+
+                return [
+                    'total' => $total,
+                    'completed' => $completed,
+                ];
+            });
+
+        $attendances = Attendance::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereBetween('attendance_date', [$dates['start'], $dates['end']])
+            ->get(['employee_id', 'status']);
+
+        $attendanceStats = $attendances
+            ->groupBy('employee_id')
+            ->map(function ($employeeAttendances) {
+                $total = $employeeAttendances->count();
+                $present = $employeeAttendances->where('status', 'Present')->count();
+
+                return [
+                    'total' => $total,
+                    'present' => $present,
+                ];
+            });
+
+        $reviewsByEmployeeTask = [];
+
+        $evaluationRows = Evaluation::query()
+            ->select('evaluations.*', 'tasks.employee_id as task_employee_id')
+            ->join('tasks', 'tasks.id', '=', 'evaluations.evaluated_id')
+            ->where('evaluations.evaluated_type', Task::class)
+            ->whereIn('tasks.employee_id', $employeeIds)
+            ->whereBetween('evaluations.created_at', [$dates['start'], $dates['end']])
+            ->get();
+
+        foreach ($evaluationRows as $evaluation) {
+            $empId = (int) $evaluation->task_employee_id;
+            $taskId = (int) $evaluation->evaluated_id;
+            $at = $evaluation->created_at;
+
+            $existing = $reviewsByEmployeeTask[$empId][$taskId] ?? null;
+            if (!$existing || ($at && $existing['at'] && $at->gt($existing['at']))) {
+                $reviewsByEmployeeTask[$empId][$taskId] = [
+                    'rating' => (int) $evaluation->rating,
+                    'grade' => (string) $evaluation->grade,
+                    'at' => $at,
+                ];
+            }
+        }
+
+        $taskEvaluationRows = TaskEvaluation::query()
+            ->select('task_evaluations.*', 'tasks.employee_id as task_employee_id')
+            ->join('tasks', 'tasks.id', '=', 'task_evaluations.task_id')
+            ->whereIn('tasks.employee_id', $employeeIds)
+            ->whereBetween('task_evaluations.evaluated_at', [$dates['start'], $dates['end']])
+            ->get();
+
+        foreach ($taskEvaluationRows as $taskEvaluation) {
+            $empId = (int) $taskEvaluation->task_employee_id;
+            $taskId = (int) $taskEvaluation->task_id;
+
+            if (isset($reviewsByEmployeeTask[$empId][$taskId])) {
+                continue;
+            }
+
+            $reviewsByEmployeeTask[$empId][$taskId] = [
+                'rating' => (int) $taskEvaluation->rating,
+                'grade' => (string) $taskEvaluation->grade,
+                'at' => $taskEvaluation->evaluated_at,
+            ];
+        }
+
+        $gradePoints = ['A' => 5, 'B' => 4, 'C' => 3, 'D' => 2, 'E' => 1, 'F' => 0];
+
+        $reviewStats = collect($employeeIds)->mapWithKeys(function ($empId) use ($reviewsByEmployeeTask, $gradePoints) {
+            $items = $reviewsByEmployeeTask[(int) $empId] ?? [];
+            $count = count($items);
+
+            $ratings = array_values(array_filter(array_map(fn ($item) => $item['rating'] ?? null, $items), 'is_numeric'));
+            $avgRating = count($ratings) > 0 ? round(array_sum($ratings) / count($ratings), 2) : null;
+
+            $points = [];
+            foreach ($items as $item) {
+                $grade = strtoupper((string) ($item['grade'] ?? ''));
+                if (array_key_exists($grade, $gradePoints)) {
+                    $points[] = $gradePoints[$grade];
+                }
+            }
+
+            $avgGrade = 'N/A';
+            if (count($points) > 0) {
+                $avgPoints = array_sum($points) / count($points);
+                $avgGrade = match (true) {
+                    $avgPoints >= 4.5 => 'A',
+                    $avgPoints >= 3.5 => 'B',
+                    $avgPoints >= 2.5 => 'C',
+                    $avgPoints >= 1.5 => 'D',
+                    $avgPoints >= 1.0 => 'E',
+                    default => 'F',
+                };
+            }
+
+            return [
+                (int) $empId => [
+                    'count' => $count,
+                    'avg_rating' => $avgRating,
+                    'avg_grade' => $avgGrade,
+                ],
+            ];
+        });
+
+        $performanceData = $employees->map(function ($employee) use ($dates, $taskStats, $attendanceStats, $reviewStats) {
+            $employeeKey = (int) $employee->id;
+
+            $totalTasks = (int) ($taskStats[$employeeKey]['total'] ?? 0);
+            $completedTasks = (int) ($taskStats[$employeeKey]['completed'] ?? 0);
+            $totalAttendance = (int) ($attendanceStats[$employeeKey]['total'] ?? 0);
+            $presentDays = (int) ($attendanceStats[$employeeKey]['present'] ?? 0);
 
             $taskCompletionRate = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
             $attendanceRate = $totalAttendance > 0 ? ($presentDays / $totalAttendance) * 100 : 0;
-            $performanceScore = ($taskCompletionRate * 0.4) + ($attendanceRate * 0.6);
+            $reviewedCount = (int) ($reviewStats[$employeeKey]['count'] ?? 0);
+            $avgReviewRating = $reviewStats[$employeeKey]['avg_rating'] ?? null;
+            $avgReviewGrade = (string) ($reviewStats[$employeeKey]['avg_grade'] ?? 'N/A');
+
+            $evaluationScore = is_numeric($avgReviewRating) ? (((float) $avgReviewRating) / 5) * 100 : 0;
+            $performanceScore = ($taskCompletionRate * 0.4) + ($attendanceRate * 0.4) + ($evaluationScore * 0.2);
 
             return [
                 'employee_name' => $employee->user->name,
@@ -401,22 +536,35 @@ class ReportController extends Controller
                 'total_attendance_days' => $totalAttendance,
                 'present_days' => $presentDays,
                 'attendance_rate' => round($attendanceRate, 2),
-                'performance_score' => round($performanceScore, 2)
+                'reviewed_evaluations' => $reviewedCount,
+                'avg_review_rating' => $avgReviewRating,
+                'avg_review_grade' => $avgReviewGrade,
+                'evaluation_score' => round($evaluationScore, 2),
+                'performance_score' => round($performanceScore, 2),
             ];
         });
 
+        $avgReviewRating = $performanceData->pluck('avg_review_rating')
+            ->filter(fn ($value) => is_numeric($value))
+            ->avg();
+
+        $totalReviewed = $performanceData->sum('reviewed_evaluations');
+
         $summary = [
             'total_employees' => $employees->count(),
+            'total_reviewed_evaluations' => $totalReviewed,
+            'avg_review_rating' => $avgReviewRating !== null ? round((float) $avgReviewRating, 2) : null,
+            'avg_evaluation_score' => $performanceData->avg('evaluation_score'),
             'avg_performance_score' => $performanceData->avg('performance_score'),
             'avg_task_completion' => $performanceData->avg('task_completion_rate'),
             'avg_attendance_rate' => $performanceData->avg('attendance_rate'),
-            'period' => $dates['label']
+            'period' => $dates['label'],
         ];
 
         return [
             'title' => 'Performance Report',
             'summary' => $summary,
-            'data' => $performanceData->toArray()
+            'data' => $performanceData->toArray(),
         ];
     }
 
@@ -425,7 +573,7 @@ class ReportController extends Controller
         $query = Employee::with('user');
 
         if ($department) {
-            $query->where('department', $department);
+            $query->where('department_id', $department);
         }
 
         $employees = $query->get();
@@ -434,7 +582,7 @@ class ReportController extends Controller
             'total_employees' => $employees->count(),
             'active_employees' => $employees->where('status', 'Active')->count(),
             'inactive_employees' => $employees->where('status', 'Inactive')->count(),
-            'departments' => $employees->pluck('department')->unique()->count()
+            'departments' => $employees->pluck('department_id')->filter()->unique()->count()
         ];
 
         return [

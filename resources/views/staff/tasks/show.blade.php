@@ -3,70 +3,298 @@
 @section('title', 'Task: ' . $task->title)
 @section('page_title', 'Task Details')
 
+@push('styles')
+<style>
+    .task-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .task-hero .title-wrap {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .task-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #1D9E75 0%, #0F2044 100%);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 20px;
+        box-shadow: 0 12px 24px rgba(15, 32, 68, 0.14);
+    }
+
+    .task-meta {
+        color: #6b7280;
+    }
+
+    .card-soft {
+        border-radius: 18px;
+        border: 1px solid rgba(15, 32, 68, 0.06);
+        box-shadow: 0 12px 30px rgba(15, 32, 68, 0.06);
+        overflow: hidden;
+    }
+
+    .card-soft .card-header {
+        background: #fff;
+        border-bottom: 1px solid rgba(15, 32, 68, 0.06);
+    }
+
+    .section-divider {
+        height: 1px;
+        background: rgba(15, 32, 68, 0.06);
+        margin: 18px 0;
+    }
+
+    .badge.custom-priority {
+        padding: 0.45rem 0.7rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .quick-info .time-remaining {
+        display: block;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #fef3c7, #fff7ed);
+        color: #7c2d12;
+        font-weight: 600;
+        border-left: 4px solid #d97706;
+    }
+
+    .quick-info .time-remaining.overdue {
+        background: linear-gradient(90deg, #fee2e2, #fff1f2);
+        color: #991b1b;
+        border-left-color: #dc2626;
+    }
+
+    .quick-info .btn-perform {
+        background: linear-gradient(135deg, #1D9E75 0%, #16638a 100%);
+        color: #fff;
+        border: none;
+        box-shadow: 0 8px 18px rgba(29, 158, 117, 0.18);
+    }
+
+    .quick-info .btn-perform:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .work-modal .modal-content {
+        border: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 28px 60px rgba(15, 32, 68, 0.28);
+    }
+
+    .work-modal .modal-header {
+        background: linear-gradient(135deg, #0F2044 0%, #1D9E75 150%);
+        color: #fff;
+        border-bottom: 0;
+        padding: 18px 22px;
+    }
+
+    .work-modal .modal-body {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        padding: 22px;
+    }
+
+    .work-modal .modal-footer {
+        background: #fff;
+        border-top: 1px solid rgba(15, 32, 68, 0.06);
+        padding: 16px 22px;
+    }
+
+    .task-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .summary-pill {
+        background: #fff;
+        border: 1px solid rgba(15, 32, 68, 0.08);
+        border-radius: 14px;
+        padding: 12px 14px;
+        box-shadow: 0 10px 20px rgba(15, 32, 68, 0.04);
+    }
+
+    .summary-pill .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    .summary-pill .value {
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .form-section {
+        background: #fff;
+        border: 1px solid rgba(15, 32, 68, 0.08);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .form-section .section-title {
+        font-weight: 700;
+        color: #0F2044;
+        margin-bottom: 8px;
+    }
+
+    .form-help {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+
+    .evidence-preview {
+        margin-top: 12px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px dashed rgba(15, 32, 68, 0.18);
+        background: #f8fafc;
+    }
+
+    .evidence-preview .preview-body {
+        padding: 12px 14px;
+    }
+
+    .check-area {
+        background: linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 100%);
+        border: 1px solid rgba(29, 158, 117, 0.18);
+        border-radius: 14px;
+        padding: 14px 16px;
+    }
+
+    .info-box {
+        background: #f8fafc;
+        border: 1px solid rgba(15, 32, 68, 0.06);
+        border-radius: 14px;
+        padding: 14px;
+        height: 100%;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    @media (max-width: 992px) {
+        .task-hero {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .task-avatar {
+            width: 48px;
+            height: 48px;
+            font-size: 18px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ $task->title }}</h5>
-            <a href="{{ route('staff.tasks.index') }}" class="btn btn-outline-secondary btn-sm">Back to Tasks</a>
+<div class="task-hero">
+    <div class="title-wrap">
+        <div class="task-avatar">{{ strtoupper(substr($task->title, 0, 1)) }}</div>
+        <div>
+            <div class="text-uppercase fw-semibold task-meta" style="letter-spacing: .12em; font-size: 11px;">Task Details</div>
+            <h3 class="mb-1 fw-bold">{{ $task->title }}</h3>
+            <div class="task-meta">Assigned by {{ $task->assigner?->name ?? 'Unknown' }} · Task #{{ $task->id }}</div>
         </div>
     </div>
+    <a href="{{ route('staff.tasks.index') }}" class="btn btn-outline-secondary btn-sm px-3">Back to Tasks</a>
 </div>
 
 <div class="row g-4">
-    <!-- Main Task Details -->
     <div class="col-lg-8">
         <div class="card card-soft">
-            <div class="card-body">
-                <h6 class="mb-3">Description</h6>
-                <p class="text-muted">{{ $task->description ?? 'No description provided' }}</p>
+            <div class="card-body p-4 p-lg-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div>
+                        <div class="text-uppercase fw-semibold task-meta" style="letter-spacing: .12em; font-size: 11px;">Description</div>
+                        <p class="mb-0 text-muted">{{ $task->description ?? 'No description provided' }}</p>
+                    </div>
+                    <span class="badge custom-priority {{ $task->priority === 'High' ? 'bg-danger' : ($task->priority === 'Medium' ? 'bg-warning text-dark' : 'bg-secondary') }}">
+                        {{ $task->priority ?? 'Not Set' }}
+                    </span>
+                </div>
 
-                <hr>
+                <div class="section-divider"></div>
 
-                <div class="row mb-3">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Status</h6>
-                        <span class="badge {{ 
-                            $task->status === 'Completed' ? 'bg-success' : 
-                            ($task->status === 'In Progress' ? 'bg-info' : 'bg-danger') 
-                        }} fs-6">
-                            {{ $task->status }}
-                        </span>
+                        <div class="info-box">
+                            <div class="info-label">Status</div>
+                            <span class="badge fs-6 {{ $task->status === 'Completed' ? 'bg-success' : ($task->status === 'In Progress' ? 'bg-info' : 'bg-danger') }}">
+                                {{ $task->status }}
+                            </span>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Priority</h6>
-                        <span class="badge {{ 
-                            $task->priority === 'High' ? 'bg-danger' : 
-                            ($task->priority === 'Medium' ? 'bg-warning' : 'bg-secondary') 
-                        }} fs-6">
-                            {{ $task->priority ?? 'Not Set' }}
-                        </span>
+                        <div class="info-box">
+                            <div class="info-label">Priority</div>
+                            <span class="badge fs-6 custom-priority {{ $task->priority === 'High' ? 'bg-danger' : ($task->priority === 'Medium' ? 'bg-warning text-dark' : 'bg-secondary') }}">
+                                {{ $task->priority ?? 'Not Set' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <hr>
+                <div class="section-divider"></div>
 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Created Date</h6>
-                        <p>{{ $task->created_at?->format('Y-m-d H:i') ?? '-' }}</p>
+                        <div class="info-box">
+                            <div class="info-label">Created Date</div>
+                            <div class="info-value">{{ $task->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Deadline</h6>
-                        <p>{{ $task->deadline?->format('Y-m-d') ?? 'No deadline' }}</p>
+                        <div class="info-box">
+                            <div class="info-label">Deadline</div>
+                            <div class="info-value">{{ $task->deadline?->format('Y-m-d') ?? 'No deadline' }}</div>
+                        </div>
                     </div>
                 </div>
 
-                <hr>
+                <div class="section-divider"></div>
 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Assigned By</h6>
-                        <p>{{ $task->assigner?->name ?? 'Unknown' }}</p>
+                        <div class="info-box">
+                            <div class="info-label">Assigned By</div>
+                            <div class="info-value">{{ $task->assigner?->name ?? 'Unknown' }}</div>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Task ID</h6>
-                        <p><code>{{ $task->id }}</code></p>
+                        <div class="info-box">
+                            <div class="info-label">Task ID</div>
+                            <div class="info-value"><code>{{ $task->id }}</code></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,7 +303,7 @@
         @if($task->status === 'Completed')
             <div class="card card-soft mt-4">
                 <div class="card-header bg-white fw-semibold">Evaluation</div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @php
                         $evaluation = $task->evaluation;
                         $isMyEvaluation = $evaluation && (int) ($evaluation->staff_user_id ?? 0) === (int) auth()->id();
@@ -94,7 +322,7 @@
                             </div>
                         </div>
 
-                        <hr>
+                        <div class="section-divider"></div>
 
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -111,7 +339,7 @@
                             </div>
                         </div>
 
-                        <hr>
+                        <div class="section-divider"></div>
 
                         <div class="mb-2">
                             <div class="text-muted small mb-1">Remarks</div>
@@ -132,54 +360,48 @@
         @endif
     </div>
 
-    <!-- Task Summary -->
     <div class="col-lg-4">
-        <div class="card card-soft">
+        <div class="card card-soft quick-info">
             <div class="card-header bg-white fw-semibold">Quick Info</div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="mb-3">
-                    <small class="text-muted">Status</small>
-                    <div class="mt-2">
-                        <div class="progress" role="progressbar" style="height: 8px;">
-                            <div class="progress-bar {{ 
-                                $task->status === 'Completed' ? 'bg-success' : 
-                                ($task->status === 'In Progress' ? 'bg-info' : 'bg-danger') 
-                            }}" style="width: {{ 
-                                $task->status === 'Completed' ? '100' : 
-                                ($task->status === 'In Progress' ? '50' : '0') 
-                            }}%"></div>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted fw-semibold text-uppercase" style="letter-spacing: .08em;">Status</small>
+                        <small class="text-muted">Progress</small>
+                    </div>
+                    <div class="progress" role="progressbar" style="height: 10px; border-radius: 999px; background: #eef2f7;">
+                        <div class="progress-bar {{ $task->status === 'Completed' ? 'bg-success' : ($task->status === 'In Progress' ? 'bg-info' : 'bg-danger') }}" style="width: {{ $task->status === 'Completed' ? '100' : ($task->status === 'In Progress' ? '55' : '15') }}%; border-radius: 999px;"></div>
                     </div>
                 </div>
 
-                <hr>
+                <div class="section-divider"></div>
 
                 <div class="mb-3">
-                    <small class="text-muted">Time Remaining</small>
+                    <small class="text-muted fw-semibold text-uppercase" style="letter-spacing: .08em;">Time Remaining</small>
                     @if($task->deadline)
                         @if($task->deadline->isPast())
-                            <div class="alert alert-danger mt-2 mb-0 py-2">
-                                <small>⏰ Overdue by {{ $task->deadline->diffInDays(now()) }} days</small>
+                            <div class="time-remaining overdue mt-2">
+                                ⏰ Overdue by {{ $task->deadline->diffInDays(now()) }} days
                             </div>
                         @else
-                            <div class="alert alert-warning mt-2 mb-0 py-2">
-                                <small>⏳ {{ $task->deadline->diffInDays(now()) }} days remaining</small>
+                            <div class="time-remaining mt-2">
+                                ⏳ {{ $task->deadline->diffInDays(now()) }} days remaining
                             </div>
                         @endif
                     @else
-                        <small class="text-muted">No deadline set</small>
+                        <div class="time-remaining mt-2" style="background: #f8fafc; color: #475569; border-left-color: #94a3b8;">No deadline set</div>
                     @endif
                 </div>
 
-                <hr>
+                <div class="section-divider"></div>
 
                 <div class="d-grid gap-2">
                     @if($task->status !== 'Completed')
-                        <button type="button" class="btn btn-success" onclick="startTask({{ $task->id }})">
+                        <button type="button" class="btn btn-perform btn-lg" onclick="startTask({{ $task->id }})">
                             🚀 Perform Work
                         </button>
                     @endif
-                    <a href="{{ route('staff.tasks.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ route('staff.tasks.index') }}" class="btn btn-outline-secondary">
                         Back to All Tasks
                     </a>
                 </div>
@@ -187,65 +409,78 @@
         </div>
     </div>
 </div>
-
 @endsection
 
-<!-- Task Performance Modal -->
-<div class="modal fade" id="performWorkModal" tabindex="-1" aria-labelledby="performWorkModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade work-modal" id="performWorkModal" tabindex="-1" aria-labelledby="performWorkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="performWorkModalLabel">
-                    🚀 Perform Work: {{ $task->title }}
-                </h5>
+            <div class="modal-header">
+                <div>
+                    <div class="text-uppercase fw-semibold" style="font-size: 11px; letter-spacing: 0.12em; opacity: 0.85;">Work Submission</div>
+                    <h5 class="modal-title mb-0" id="performWorkModalLabel">🚀 Perform Work: {{ $task->title }}</h5>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
-                    <strong>Task Details:</strong><br>
-                    {{ $task->description ?? 'No description provided' }}
+                <div class="task-summary-strip">
+                    <div class="summary-pill">
+                        <div class="label">Status</div>
+                        <div class="value">{{ $task->status }}</div>
+                    </div>
+                    <div class="summary-pill">
+                        <div class="label">Deadline</div>
+                        <div class="value">{{ $task->deadline?->format('Y-m-d') ?? 'No deadline' }}</div>
+                    </div>
+                    <div class="summary-pill">
+                        <div class="label">Priority</div>
+                        <div class="value">{{ $task->priority ?? 'Not Set' }}</div>
+                    </div>
                 </div>
-                
+
+                <div class="form-section">
+                    <div class="section-title">Task Details</div>
+                    <div class="text-muted">{{ $task->description ?? 'No description provided' }}</div>
+                </div>
+
                 <form id="performWorkForm">
-                    <div class="mb-3">
-                        <label for="workStatus" class="form-label fw-semibold">Work Status</label>
+                    <div class="form-section">
+                        <div class="section-title">Update Work Status</div>
+                        <label for="workStatus" class="form-label fw-semibold">Current Status</label>
                         <select id="workStatus" class="form-select" required>
                             <option value="In Progress">In Progress</option>
                             <option value="Completed">Completed</option>
                         </select>
-                        <small class="text-muted">Select the current status of your work</small>
+                        <div class="form-help">Choose the status that best reflects your current progress.</div>
                     </div>
-                    
-                    <div class="mb-3">
+
+                    <div class="form-section">
+                        <div class="section-title">Work Summary</div>
                         <label for="workNotes" class="form-label fw-semibold">Work Details <span class="text-danger">*</span></label>
-                        <textarea id="workNotes" class="form-control" rows="4" placeholder="Describe what you've done, any challenges faced, and the current status of the work..." required style="border: 1px solid #ced4da;"></textarea>
-                        <small class="text-muted">Please provide detailed information about your work progress</small>
+                        <textarea id="workNotes" class="form-control" rows="5" placeholder="Write a short update: what was done, what remains, issues encountered, and any next steps..." required></textarea>
+                        <div class="form-help">Give enough detail for the reviewer to understand the progress without asking follow-up questions.</div>
                     </div>
-                    
-                    <div class="mb-3">
+
+                    <div class="form-section">
+                        <div class="section-title">Evidence</div>
                         <label for="photoEvidence" class="form-label fw-semibold">Evidence File (Optional)</label>
-                        <input type="file" id="photoEvidence" class="form-control" style="border: 1px solid #ced4da;">
-                        <small class="text-muted">Upload any file as evidence of your completed work (PDF, images, documents, max 10MB)</small>
-                        <div id="filePreview" class="mt-2" style="display: none;">
-                            <div class="alert alert-info">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3">
-                                        <span id="fileIcon" style="font-size: 2rem;">📄</span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="fw-semibold" id="fileName">Selected file</div>
-                                        <small class="text-muted" id="fileSize">File size</small>
-                                    </div>
+                        <input type="file" id="photoEvidence" class="form-control">
+                        <div class="form-help">PDFs, images, and documents are supported. Maximum file size is 10MB.</div>
+                        <div id="filePreview" class="evidence-preview" style="display: none;">
+                            <div class="preview-body d-flex align-items-center gap-3">
+                                <div class="fs-2" id="fileIcon">📄</div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold" id="fileName">Selected file</div>
+                                    <small class="text-muted" id="fileSize">File size</small>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile()">Remove</button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeFile()">Remove File</button>
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
+
+                    <div class="check-area mb-2">
+                        <div class="form-check mb-0">
                             <input class="form-check-input" type="checkbox" id="confirmWork" required>
-                            <label class="form-check-label" for="confirmWork">
+                            <label class="form-check-label fw-semibold" for="confirmWork">
                                 I confirm that I have honestly reported my work progress
                             </label>
                         </div>
@@ -254,9 +489,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="submitWorkBtn" class="btn btn-success" onclick="submitWork()">
-                    Submit Work
-                </button>
+                <button type="button" id="submitWorkBtn" class="btn btn-success px-4" onclick="submitWork()">Submit Work</button>
             </div>
         </div>
     </div>
@@ -265,16 +498,13 @@
 @push('scripts')
 <script>
 function startTask(taskId) {
-    // Show confirmation modal
     const modal = new bootstrap.Modal(document.getElementById('performWorkModal'));
     modal.show();
 }
 
-// Check if we need to open the modal on page load
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('perform') === 'true') {
-        // Trigger the modal after a short delay to ensure page is loaded
         setTimeout(() => {
             const modal = new bootstrap.Modal(document.getElementById('performWorkModal'));
             if (modal) {
@@ -289,26 +519,23 @@ function submitWork() {
     const workNotes = document.getElementById('workNotes').value;
     const workStatus = document.getElementById('workStatus').value;
     const photoFile = document.getElementById('photoEvidence').files[0];
-    
+
     if (!workNotes.trim()) {
         alert('Please provide work details.');
         return;
     }
-    
-    // Show loading state
+
     const submitBtn = document.getElementById('submitWorkBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
-    
-    // Create FormData for file upload
+
     const formData = new FormData();
     formData.append('notes', workNotes);
     formData.append('status', workStatus);
     if (photoFile) {
         formData.append('photo_evidence', photoFile);
     }
-    
-    // Submit the work
+
     fetch(`/staff/tasks/${taskId}/perform`, {
         method: 'POST',
         headers: {
@@ -319,11 +546,9 @@ function submitWork() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Close modal and refresh page
             bootstrap.Modal.getInstance(document.getElementById('performWorkModal')).hide();
             location.reload();
         } else {
-            // Handle validation errors
             if (data.errors) {
                 let errorMessage = 'Please fix the following errors:\n';
                 for (const [field, errors] of Object.entries(data.errors)) {
@@ -345,32 +570,26 @@ function submitWork() {
     });
 }
 
-// File preview functionality
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('photoEvidence');
     const filePreview = document.getElementById('filePreview');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
     const fileIcon = document.getElementById('fileIcon');
-    
+
     if (fileInput) {
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Check file size (10MB max)
                 if (file.size > 10 * 1024 * 1024) {
                     alert('File size must be less than 10MB');
                     fileInput.value = '';
                     return;
                 }
-                
-                // Show file info
+
                 fileName.textContent = file.name;
                 fileSize.textContent = formatFileSize(file.size);
-                
-                // Set appropriate icon based on file type
                 fileIcon.textContent = getFileIcon(file.type);
-                
                 filePreview.style.display = 'block';
             }
         });
@@ -395,7 +614,7 @@ function getFileIcon(fileType) {
     if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📽️';
     if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return '🗜️';
     if (fileType.includes('text')) return '📃';
-    return '📎'; // Default icon for other files
+    return '📎';
 }
 
 function removeFile() {

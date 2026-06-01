@@ -22,6 +22,9 @@ class LeaveController extends Controller
     {
         $user = Auth::user();
         $balance = LeaveRequest::getLeaveUsage($user->employee_id, Carbon::now()->year);
+
+        $balance['this_request'] = 0;
+
         return view('staff.leaves.create', compact('balance'));
     }
 
@@ -38,14 +41,40 @@ class LeaveController extends Controller
         // Calculate requested days (inclusive)
         $from = Carbon::parse($validated['from_date'])->startOfDay();
         $to = Carbon::parse($validated['to_date'])->endOfDay();
-        $requestedDays = $from->diffInDays($to) + 1;
+        $requestedDays = LeaveRequest::workingDaysBetween($from, $to);
+
+        if ($requestedDays < 1) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['to_date' => 'Please select at least one working day.']);
+        }
 
         $balance = LeaveRequest::getLeaveUsage($user->employee_id, $from->year);
+        $weekStart = $from->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $weekEnd = $from->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+        $monthStart = $from->copy()->startOfMonth()->startOfDay();
+        $monthEnd = $from->copy()->endOfMonth()->endOfDay();
+        $requestedWeekDays = LeaveRequest::workingDaysInPeriod($from, $to, $weekStart, $weekEnd);
+        $requestedMonthDays = LeaveRequest::workingDaysInPeriod($from, $to, $monthStart, $monthEnd);
+        $weeklyUsed = LeaveRequest::periodUsage($user->employee_id, $weekStart, $weekEnd);
+        $monthlyUsed = LeaveRequest::periodUsage($user->employee_id, $monthStart, $monthEnd);
 
         if ($requestedDays > $balance['remaining']) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['to_date' => "Requested leave ({$requestedDays} days) exceeds remaining allowance of {$balance['remaining']} days for the year."]);
+                ->withErrors(['to_date' => "Requested leave ({$requestedDays} working days) exceeds remaining allowance of {$balance['remaining']} days for the year."]);
+        }
+
+        if (($weeklyUsed + $requestedWeekDays) > LeaveRequest::weeklyQuota()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['to_date' => "Requested leave exceeds the weekly quota of " . LeaveRequest::weeklyQuota() . " working days."]);
+        }
+
+        if (($monthlyUsed + $requestedMonthDays) > LeaveRequest::monthlyQuota()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['to_date' => "Requested leave exceeds the monthly quota of " . LeaveRequest::monthlyQuota() . " working days."]);
         }
 
         $leaveRequest = LeaveRequest::firstOrCreate(
@@ -71,6 +100,28 @@ class LeaveController extends Controller
         $this->notifySupervisors($leaveRequest, $user);
         
         return redirect()->route('staff.leaves.index')->with('success', 'Leave request submitted successfully.');
+    }
+
+    public function destroy(LeaveRequest $leaf)
+    {
+        $user = Auth::user();
+
+        if ((int) $leaf->employee_id !== (int) $user->employee_id) {
+            abort(404);
+        }
+
+        if ($leaf->status !== 'Pending') {
+            return redirect()->route('staff.leaves.index')
+                ->with('error', 'Only pending leave requests can be cancelled.');
+        }
+
+        $leaf->update([
+            'status' => 'Cancelled',
+            'remarks' => trim(($leaf->remarks ? $leaf->remarks . ' ' : '') . 'Cancelled by staff.'),
+        ]);
+
+        return redirect()->route('staff.leaves.index')
+            ->with('success', 'Leave request cancelled successfully.');
     }
 
     private function notifySupervisors(LeaveRequest $leaveRequest, User $staff)

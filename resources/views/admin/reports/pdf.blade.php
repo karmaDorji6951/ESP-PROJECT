@@ -22,6 +22,13 @@
     $summary = $data['summary'] ?? [];
     $rows = $data['data'] ?? [];
     $headings = (is_array($rows) && count($rows) > 0 && is_array($rows[0])) ? array_keys($rows[0]) : [];
+    $labelFor = function ($key) {
+        return match ((string) $key) {
+            'department' => 'Area',
+            'departments' => 'Areas',
+            default => str_replace('_', ' ', ucfirst((string) $key)),
+        };
+    };
 @endphp
 
 <h2>{{ $title }}</h2>
@@ -36,7 +43,7 @@
             <tbody>
             @foreach($summary as $key => $value)
                 <tr>
-                    <td><strong>{{ str_replace('_', ' ', ucfirst((string) $key)) }}</strong></td>
+                    <td><strong>{{ $labelFor($key) }}</strong></td>
                     <td>{{ is_scalar($value) ? $value : json_encode($value) }}</td>
                 </tr>
             @endforeach
@@ -51,7 +58,7 @@
         <thead>
             <tr>
                 @foreach($headings as $heading)
-                    <th>{{ str_replace('_', ' ', ucfirst((string) $heading)) }}</th>
+                    <th>{{ $labelFor($heading) }}</th>
                 @endforeach
             </tr>
         </thead>

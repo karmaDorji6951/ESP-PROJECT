@@ -10,27 +10,24 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Schema;
 
 $hasDepartmentsTable = Schema::hasTable('departments');
+// Check for departments table and employees.department_id
 $hasEmployeeDepartmentColumn = Schema::hasColumn('employees', 'department');
+$hasEmployeeDepartmentId = Schema::hasColumn('employees', 'department_id');
 
 echo "Database department check:\n";
 echo "- departments table: " . ($hasDepartmentsTable ? 'YES' : 'NO') . "\n";
-echo "- employees.department column: " . ($hasEmployeeDepartmentColumn ? 'YES' : 'NO') . "\n\n";
+echo "- employees.department column: " . ($hasEmployeeDepartmentColumn ? 'YES' : 'NO') . "\n";
+echo "- employees.department_id column: " . ($hasEmployeeDepartmentId ? 'YES' : 'NO') . "\n\n";
 
-if (!$hasEmployeeDepartmentColumn) {
-    echo "Your system does not currently store departments on employees (missing employees.department).\n";
-    echo "If you want to use departments, add a nullable department column to the employees table.\n";
+if (!Schema::hasTable('departments')) {
+    echo "No departments table detected.\n";
     exit(0);
 }
 
-$departments = \App\Models\Employee::query()
-    ->distinct()
-    ->whereNotNull('department')
-    ->pluck('department')
-    ->filter()
-    ->values();
+$departments = \App\Models\Department::orderBy('name')->get();
 
-echo "Current departments in your system:\n";
-foreach ($departments as $department) {
-    echo "- " . $department . "\n";
+echo "Departments table contents:\n";
+foreach ($departments as $dept) {
+    echo "- " . $dept->name . ( $dept->parent_id ? ' (child of ' . optional($dept->parent)->name . ')' : '' ) . "\n";
 }
-echo "\nTotal: " . count($departments) . " departments\n";
+echo "\nTotal: " . $departments->count() . " departments\n";

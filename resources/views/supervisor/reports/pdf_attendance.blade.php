@@ -116,11 +116,11 @@
     </tr>
 </table>
 
-<h2>By Department</h2>
+<h2>By Area</h2>
 <table class="data">
     <thead>
         <tr>
-            <th>Department</th>
+            <th>Area</th>
             <th class="right">Present</th>
             <th class="right">Late</th>
             <th class="right">Absent</th>
@@ -151,7 +151,7 @@
             <th>Employee</th>
             <th>ID</th>
             <th>Designation</th>
-            <th>Department</th>
+            <th>Area</th>
             <th>Status</th>
             <th>Time In</th>
             <th>Time Out</th>

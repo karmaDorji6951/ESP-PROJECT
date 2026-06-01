@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Timetable extends Model
 {
@@ -21,6 +22,7 @@ class Timetable extends Model
         'employee_id',
         'assigned_by',
         'assigned_to_role',
+        'assigned_to_role_id',
         'task_id',
     ];
 
@@ -40,6 +42,29 @@ class Timetable extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    public function assignedToRole()
+    {
+        return $this->belongsTo(Role::class, 'assigned_to_role_id');
+    }
+
+    public function getAssignedToRoleAttribute()
+    {
+        // Avoid recursion: `$this->assignedToRole` would resolve the accessor for `assigned_to_role`.
+        return $this->assignedToRole()->value('slug');
+    }
+
+    public function setAssignedToRoleAttribute($value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['assigned_to_role_id'] = null;
+            return;
+        }
+
+        // Avoid model dependency loops and keep it lightweight.
+        $roleId = DB::table('roles')->where('slug', $value)->value('id');
+        $this->attributes['assigned_to_role_id'] = $roleId;
+    }
+
     public function task()
     {
         return $this->belongsTo(Task::class);
@@ -53,10 +78,10 @@ class Timetable extends Model
 
         if ($user->role->slug === 'staff' && $user->employee) {
             return $query->where('employee_id', $user->employee->id)
-                        ->orWhere('assigned_to_role', $user->role->slug);
+                        ->orWhere('assigned_to_role_id', $user->role_id);
         }
 
-        return $query->where('assigned_to_role', $user->role->slug);
+        return $query->where('assigned_to_role_id', $user->role_id);
     }
 
     public function scopeForDateRange($query, $startDate, $endDate)

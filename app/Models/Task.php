@@ -54,6 +54,21 @@ class Task extends Model
         return $this->hasOne(TaskEvaluation::class);
     }
 
+    public function evaluations()
+    {
+        return $this->morphMany(Evaluation::class, 'evaluated');
+    }
+
+    public function latestEvaluation()
+    {
+        return $this->morphOne(Evaluation::class, 'evaluated')->latestOfMany();
+    }
+
+    public function getReviewedEvaluationAttribute()
+    {
+        return $this->latestEvaluation ?? $this->evaluation;
+    }
+
     public function timetable()
     {
         return $this->hasOne(Timetable::class);

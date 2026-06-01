@@ -13,6 +13,7 @@
     <form action="{{ route('profile.update') }}" method="POST" class="profile-form" enctype="multipart/form-data">
         @csrf
         @method('PUT')
+        <input type="hidden" name="photo_mode" id="photo-mode" value="{{ old('photo_mode', $user->photo_path ? 'photo' : 'plain') }}">
 
         <div class="form-sections">
             <!-- Photo Upload Section -->
@@ -20,26 +21,32 @@
                 <h3>Profile Photo</h3>
                 <div class="photo-upload-container" style="display: flex; align-items: flex-start; gap: 30px;">
                     <!-- Current Photo Preview -->
-                    <div style="flex: 0 0 200px;">
-                        <div style="width: 200px; height: 200px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #06b6d4; margin-bottom: 12px; position: relative; cursor: pointer; transition: all 0.3s ease;" 
-                             onmouseover="this.style.borderColor='#0369a1'; this.style.transform='scale(1.02)';"
-                             onmouseout="this.style.borderColor='#06b6d4'; this.style.transform='scale(1)';"
-                             onclick="document.getElementById('photo').click();">
-                            @if($user->photo_path)
-                                <img src="{{ asset('storage/' . $user->photo_path) }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                <div style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white;">
+                    <div class="photo-preview-wrapper">
+                        <div class="photo-preview" onclick="document.getElementById('photo').click();">
+                            @if($user->photo_url)
+                                <img src="{{ $user->photo_url }}" alt="{{ $user->name }}" class="photo-img">
+                                <div class="photo-badge">📷</div>
                                     📷
                                 </div>
                             @else
-                                <div style="text-align: center; color: #0369a1;">
-                                    <div style="font-size: 64px; font-weight: bold;">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
-                                    <small style="font-size: 14px;">No photo</small>
+                                <div class="no-photo">
+                                    <div class="no-photo-initials">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
+                                    <small>No photo</small>
                                 </div>
-                                <div style="position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white;">
-                                    ➕
-                                </div>
+                                <div class="photo-badge">➕</div>
                             @endif
                         </div>
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px;">
+                            <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #2c3e50; cursor: pointer;">
+                                <input type="radio" name="photo_mode_choice" value="photo" {{ old('photo_mode', $user->photo_path ? 'photo' : 'plain') === 'photo' ? 'checked' : '' }}>
+                                Keep photo
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #2c3e50; cursor: pointer;">
+                                <input type="radio" name="photo_mode_choice" value="plain" {{ old('photo_mode', $user->photo_path ? 'photo' : 'plain') === 'plain' ? 'checked' : '' }}>
+                                Use plain profile
+                            </label>
+                        </div>
+                        <small style="display: block; margin-top: 8px; color: #666; font-weight: 500;">Choose plain profile to remove the uploaded photo and show initials instead.</small>
                         @if($user->photo_path)
                             <small style="color: #666; font-weight: 500;">Current photo (click to change)</small>
                         @else
@@ -329,6 +336,30 @@ textarea.form-control {
     border-top: 1px solid var(--border-color);
 }
 
+/* Photo preview responsive */
+.photo-upload-container { display: flex; align-items: flex-start; gap: 30px; }
+.photo-preview-wrapper { flex: 0 0 200px; }
+.photo-preview {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #06b6d4;
+    margin-bottom: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.photo-preview:hover { border-color: #0369a1; transform: scale(1.02); }
+.photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-badge { position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px; background: rgba(6, 182, 212, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; backdrop-filter: blur(4px); border: 2px solid white; }
+.no-photo { text-align: center; color: #0369a1; }
+.no-photo-initials { font-size: 48px; font-weight: 700; }
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -389,16 +420,47 @@ textarea.form-control {
         justify-content: center;
     }
 }
+
+@media (max-width: 768px) {
+    .photo-upload-container { flex-direction: column !important; align-items: center !important; gap: 16px !important; }
+    .photo-preview-wrapper { flex: 0 0 auto; }
+    .photo-preview { width: 160px; height: 160px; }
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('photo');
+    const photoModeHidden = document.getElementById('photo-mode');
+    const photoModeChoices = document.querySelectorAll('input[name="photo_mode_choice"]');
     const profilePhotoContainer = document.querySelector('[onclick*="photo.click()"]');
 
+    function syncPhotoMode() {
+        const selected = document.querySelector('input[name="photo_mode_choice"]:checked');
+
+        if (selected && photoModeHidden) {
+            photoModeHidden.value = selected.value;
+
+            if (selected.value === 'plain' && photoInput) {
+                photoInput.value = '';
+            }
+        }
+    }
+
+    photoModeChoices.forEach(function(choice) {
+        choice.addEventListener('change', syncPhotoMode);
+    });
+
     // Handle file selection
-    photoInput.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const photoChoice = document.querySelector('input[name="photo_mode_choice"][value="photo"]');
+                if (photoChoice) {
+                    photoChoice.checked = true;
+                }
+                syncPhotoMode();
+
             const file = this.files[0];
             
             // Show image preview
@@ -412,8 +474,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             reader.readAsDataURL(file);
-        }
-    });
+            }
+        });
+    }
+
+    syncPhotoMode();
 });
 </script>
 @endpush

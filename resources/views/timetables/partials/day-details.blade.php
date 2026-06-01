@@ -2,7 +2,7 @@
     <div class="no-tasks-day">
         <div class="no-tasks-icon">📅</div>
         <div class="no-tasks-title">No tasks scheduled</div>
-        <div class="no-tasks-description">No timetable entries found for this date</div>
+        <div class="no-tasks-description">No schedule entries found for this date</div>
         
         <!-- Add Task Button -->
         <div style="margin-top: 30px;">
@@ -38,7 +38,14 @@
 
     <div class="day-timeline">
         @foreach($dayTimetables as $timetable)
-            <div class="timeline-event">
+            @php $eventUrl = $timetable->task ? route('tasks.show', $timetable->task) : route('timetables.show', $timetable); @endphp
+            <div
+                class="timeline-event timeline-event-clickable"
+                onclick="window.location.href='{{ $eventUrl }}'"
+                role="link"
+                tabindex="0"
+                onkeydown="if(event.key==='Enter'||event.key===' '){ event.preventDefault(); window.location.href='{{ $eventUrl }}'; }"
+            >
                 <div class="event-time-block">
                     <div class="time-range">
                         {{ $timetable->start_time->format('H:i') }} - {{ $timetable->end_time->format('H:i') }}
@@ -63,6 +70,22 @@
                     
                     @if($timetable->description)
                         <p class="event-description">{{ $timetable->description }}</p>
+                    @endif
+
+                    @if($timetable->task && $timetable->task->reviewed_evaluation)
+                        <div class="evaluation-summary">
+                            <div class="evaluation-label"><span class="reviewed-icon">✓</span> Reviewed Task</div>
+                            <div class="evaluation-meta">
+                                Grade <strong>{{ $timetable->task->reviewed_evaluation->grade }}</strong>
+                                · Rating <strong>{{ $timetable->task->reviewed_evaluation->rating }}/5</strong>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($timetable->task)
+                        <div class="event-task-link-wrap">
+                            <a href="{{ route('tasks.show', $timetable->task) }}" class="event-task-link">View Task Details</a>
+                        </div>
                     @endif
                     
                     <div class="event-details">
@@ -94,13 +117,13 @@
                     </div>
                     
                     <div class="event-actions">
-                        <a href="{{ route('timetables.show', $timetable) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                        <a href="{{ route('timetables.show', $timetable) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation()">View Details</a>
                         @if($canCreate)
-                            <a href="{{ route('timetables.edit', $timetable) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                            <form action="{{ route('timetables.destroy', $timetable) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                            <a href="{{ route('timetables.edit', $timetable) }}" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation()">Edit</a>
+                            <form action="{{ route('timetables.destroy', $timetable) }}" method="POST" style="display: inline;" onsubmit="event.stopPropagation(); return confirm('Are you sure you want to delete this task?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation()">Delete</button>
                             </form>
                         @endif
                     </div>
@@ -169,6 +192,15 @@
     border: 1px solid #e0f2fe;
     box-shadow: 0 2px 8px rgba(6, 182, 212, 0.1);
     transition: all 0.3s ease;
+}
+
+.timeline-event-clickable {
+    cursor: pointer;
+}
+
+.timeline-event-clickable:hover {
+    box-shadow: 0 10px 20px rgba(6, 182, 212, 0.16);
+    transform: translateX(4px);
 }
 
 .timeline-event:hover {
@@ -272,6 +304,61 @@
     font-size: 14px;
     margin-bottom: 12px;
     line-height: 1.5;
+}
+
+.evaluation-summary {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+}
+
+.evaluation-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #15803d;
+    margin-bottom: 4px;
+}
+
+.reviewed-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.evaluation-meta {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.event-task-link-wrap {
+    margin-bottom: 12px;
+}
+
+.event-task-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--supervisor-accent);
+}
+
+.event-task-link:hover {
+    text-decoration: underline;
 }
 
 .event-details {

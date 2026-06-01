@@ -1003,7 +1003,7 @@
                             <li>
                                 <span class="dot ok"></span>
                                 <div>
-                                    <h4>Attendance imported for all departments</h4>
+                                    <h4>Attendance imported for all building areas</h4>
                                     <p>Data synchronized from biometric gateway.</p>
                                 </div>
                                 <span class="pill">Done</span>
@@ -1139,7 +1139,7 @@
                         if (window.Echo) {
                             try {
                                 window.Echo.private(`user.${userId}`)
-                                    .listen('TaskAssigned', (data) => {
+                                    .listen('.task.assigned', (data) => {
                                         this.showNotification(
                                             'New Task Assigned! ✓',
                                             data.message || `Task: ${data.title}`,
@@ -1161,7 +1161,7 @@
                         if (window.Echo) {
                             try {
                                 window.Echo.private(`user.${userId}`)
-                                    .listen('TaskSubmitted', (data) => {
+                                    .listen('.task.submitted', (data) => {
                                         this.showNotification(
                                             'Work Submission Received! 📝',
                                             data.message || `${data.submitted_by} submitted work`,

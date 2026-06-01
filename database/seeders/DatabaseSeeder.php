@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Task;
 use App\Models\Timetable;
 use App\Models\User;
+use App\Models\Department;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -26,6 +27,8 @@ class DatabaseSeeder extends Seeder
             'pema.choden@rim.edu.bt',
             'sonam.tashi@rim.edu.bt',
         ];
+
+        $this->call(DepartmentsFromEmployeesSeeder::class);
 
         $adminRole = Role::updateOrCreate(['slug' => 'admin'], ['name' => 'Admin']);
         $supervisorRole = Role::updateOrCreate(['slug' => 'supervisor'], ['name' => 'Supervisor']);
@@ -88,10 +91,23 @@ class DatabaseSeeder extends Seeder
         User::whereNotIn('email', $allowedLoginEmails)->delete();
 
         $employees = collect([
-            ['name' => 'Karma Wangdi', 'cid' => '11806007891', 'phone' => '17112233', 'role_title' => 'Security Guard', 'department' => 'Security', 'address' => 'Paro', 'joining_date' => '2025-01-15'],
-            ['name' => 'Pema Choden', 'cid' => '12005001234', 'phone' => '77123456', 'role_title' => 'Cleaner', 'department' => 'Maintenance', 'address' => 'Chhukha', 'joining_date' => '2025-02-01'],
-            ['name' => 'Sonam Tashi', 'cid' => '11504005678', 'phone' => '17654321', 'role_title' => 'Gardener', 'department' => 'Grounds', 'address' => 'Samtse', 'joining_date' => '2025-03-10'],
-        ])->map(fn ($employee) => Employee::updateOrCreate(['cid' => $employee['cid']], $employee + ['status' => 'Active']));
+            ['name' => 'Pema Choden', 'cid' => '12005001234', 'phone' => '77123456', 'role_title' => 'Cleaner', 'building' => 'Block 1', 'area' => 'Corridor', 'address' => 'Chhukha', 'joining_date' => '2025-02-01'],
+            ['name' => 'Sonam Tashi', 'cid' => '11504005678', 'phone' => '17654321', 'role_title' => 'Gardener', 'building' => 'Block 1', 'area' => 'Garden', 'address' => 'Samtse', 'joining_date' => '2025-03-10'],
+            ['name' => 'Dorji Wangmo', 'cid' => '11907004567', 'phone' => '17223344', 'role_title' => 'Sweeper', 'building' => 'Block 1', 'area' => 'Entrance', 'address' => 'Thimphu', 'joining_date' => '2025-04-05'],
+            ['name' => 'Karma Wangdi', 'cid' => '11806007891', 'phone' => '17112233', 'role_title' => 'Security Guard', 'building' => 'Block 2', 'area' => 'Parking', 'address' => 'Paro', 'joining_date' => '2025-01-15'],
+        ])->map(function ($employee) {
+            $dept = Department::query()
+                ->where('name', $employee['area'])
+                ->whereHas('parent', fn ($query) => $query->where('name', $employee['building']))
+                ->first();
+
+            $data = $employee + ['status' => 'Active'];
+            if ($dept) {
+                $data['department_id'] = $dept->id;
+            }
+            unset($data['building'], $data['area']);
+            return Employee::updateOrCreate(['cid' => $employee['cid']], $data);
+        });
 
         foreach ($employees as $employee) {
             Attendance::updateOrCreate([
@@ -105,9 +121,9 @@ class DatabaseSeeder extends Seeder
         }
 
         // Assign employees to corresponding staff users
-        $staff1->update(['employee_id' => $employees[0]->id]);
-        $staff2->update(['employee_id' => $employees[1]->id]);
-        $staff3->update(['employee_id' => $employees[2]->id]);
+        $staff1->update(['employee_id' => $employees[3]->id]);
+        $staff2->update(['employee_id' => $employees[0]->id]);
+        $staff3->update(['employee_id' => $employees[1]->id]);
 
         Task::updateOrCreate([
             'employee_id' => $employees[0]->id,

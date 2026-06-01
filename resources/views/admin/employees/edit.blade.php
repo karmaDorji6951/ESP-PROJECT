@@ -72,6 +72,47 @@
                         </div>
                     </div>
 
+                    @php
+                        $selectedAreaId = old('department_id', $employee->department_id);
+                        $selectedBuildingId = old('building_id', $employee->departmentRelation?->parent_id ?? $employee->department_id);
+                        $buildingsForScript = ($departments ?? collect())->map(function ($building) {
+                            return [
+                                'id' => $building->id,
+                                'name' => $building->name,
+                                'areas' => $building->children->isNotEmpty()
+                                    ? $building->children->map(fn ($area) => ['id' => $area->id, 'name' => $area->name])->values()
+                                    : collect([['id' => $building->id, 'name' => $building->name]]),
+                            ];
+                        })->values();
+                    @endphp
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="building_id">Building</label>
+                                <select name="building_id" id="building_id" class="form-control">
+                                    <option value="">-- Select Building --</option>
+                                    @foreach(($departments ?? collect()) as $building)
+                                        <option value="{{ $building->id }}" {{ (string) $selectedBuildingId === (string) $building->id ? 'selected' : '' }}>
+                                            {{ $building->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="department_id">Area</label>
+                                <select name="department_id" id="department_id" class="form-control @error('department_id') is-invalid @enderror" data-selected="{{ $selectedAreaId }}">
+                                    <option value="">-- Select Area --</option>
+                                </select>
+                                @error('department_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label" for="address">Address (Dzongkhag)</label>
                         <select name="address" id="address"
@@ -126,3 +167,38 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const buildings = @json($buildingsForScript);
+    const buildingSelect = document.getElementById('building_id');
+    const areaSelect = document.getElementById('department_id');
+
+    function refreshAreas() {
+        const selectedArea = areaSelect.dataset.selected || '';
+        const building = buildings.find(item => String(item.id) === String(buildingSelect.value));
+        areaSelect.innerHTML = '<option value="">-- Select Area --</option>';
+
+        if (!building) {
+            return;
+        }
+
+        building.areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.id;
+            option.textContent = area.name;
+            option.selected = String(area.id) === String(selectedArea);
+            areaSelect.appendChild(option);
+        });
+    }
+
+    buildingSelect.addEventListener('change', function () {
+        areaSelect.dataset.selected = '';
+        refreshAreas();
+    });
+
+    refreshAreas();
+});
+</script>
+@endpush

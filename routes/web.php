@@ -15,9 +15,12 @@ use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\LeaveController as StaffLeaveController;
 use App\Http\Controllers\Staff\TaskController as StaffTaskController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\TaskController as WorkTaskController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\EvaluationController;
 use Illuminate\Support\Facades\Route;
 
 // Default Route - Redirect to login or dashboard
@@ -73,6 +76,8 @@ Route::middleware('auth')->get('/tasks', function () {
     abort(403);
 })->name('tasks.index');
 
+Route::middleware('auth')->get('/tasks/{task}', [WorkTaskController::class, 'show'])->name('tasks.show');
+
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -96,11 +101,19 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::post('tasks/{task}/evaluation', [SupervisorTaskEvaluationController::class, 'store'])->name('tasks.evaluation.store');
     Route::resource('attendance', SupervisorAttendanceController::class)->only(['index', 'create', 'store']);
     Route::resource('leaves', SupervisorLeaveController::class);
+    // Supervisor-scoped evaluations (uses the shared EvaluationController)
+    Route::get('evaluations/create', [\App\Http\Controllers\EvaluationController::class, 'create'])->name('evaluations.create');
+    Route::post('evaluations', [\App\Http\Controllers\EvaluationController::class, 'store'])->name('evaluations.store');
+    Route::get('evaluations/{evaluation}/download', [\App\Http\Controllers\EvaluationController::class, 'download'])->name('evaluations.download');
 });
+
+// Note: evaluations are embedded in the supervisor dashboard; no standalone index route.
 
 // Staff Routes
 Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/evaluations', [StaffDashboardController::class, 'evaluationsIndex'])->name('evaluations.index');
+    Route::get('/evaluations/{evaluation}', [StaffDashboardController::class, 'showEvaluation'])->name('evaluations.show');
     Route::resource('tasks', StaffTaskController::class)->only(['index', 'show']);
     Route::post('/tasks/{task}/perform', [StaffTaskController::class, 'perform'])->name('tasks.perform');
     Route::resource('leaves', StaffLeaveController::class);
@@ -120,6 +133,17 @@ Route::middleware(['auth'])->get('/profile', [ProfileController::class, 'show'])
 Route::middleware(['auth'])->get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::middleware(['auth'])->put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::middleware(['auth'])->put('/profile/photo', [ProfileController::class, 'uploadPhoto'])->name('profile.upload-photo');
+
+// Feedback Routes - Available to all authenticated users
+Route::middleware(['auth'])->get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+Route::middleware(['auth'])->get('/feedback/create', [FeedbackController::class, 'create'])->name('feedback.create');
+Route::middleware(['auth'])->get('/feedback/department-tasks', [FeedbackController::class, 'departmentTasks'])->name('feedback.department.tasks');
+Route::middleware(['auth'])->post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+
+// Evaluation Routes - simple form for submitting evaluations
+Route::middleware(['auth'])->get('/evaluations', [EvaluationController::class, 'index'])->name('evaluations.index');
+Route::middleware(['auth'])->get('/evaluations/create', [EvaluationController::class, 'create'])->name('evaluations.create');
+Route::middleware(['auth'])->post('/evaluations', [EvaluationController::class, 'store'])->name('evaluations.store');
 
 // Fallback dashboard route
 Route::middleware('auth')->get('/dashboard', function () {

@@ -61,6 +61,75 @@ class LeaveRequest extends Model
         return 21;
     }
 
+    public static function weeklyQuota(): int
+    {
+        return max(1, (int) ceil(self::annualAllowance() / 52));
+    }
+
+    public static function monthlyQuota(): int
+    {
+        return max(1, (int) ceil(self::annualAllowance() / 12));
+    }
+
+    public static function workingDaysBetween($start, $end): int
+    {
+        $startDate = Carbon::parse($start)->startOfDay();
+        $endDate = Carbon::parse($end)->startOfDay();
+
+        if ($startDate->gt($endDate)) {
+            return 0;
+        }
+
+        $days = 0;
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            if (! $date->isWeekend()) {
+                $days++;
+            }
+        }
+
+        return $days;
+    }
+
+    public static function periodUsage(int $employeeId, Carbon $periodStart, Carbon $periodEnd, array $statuses = ['Approved', 'Pending']): int
+    {
+        $leaves = self::where('employee_id', $employeeId)
+            ->whereIn('status', $statuses)
+            ->whereDate('start_date', '<=', $periodEnd->format('Y-m-d'))
+            ->whereDate('end_date', '>=', $periodStart->format('Y-m-d'))
+            ->get();
+
+        $usedDays = 0;
+
+        foreach ($leaves as $leave) {
+            $overlapStart = Carbon::parse($leave->start_date)->greaterThan($periodStart)
+                ? Carbon::parse($leave->start_date)
+                : $periodStart->copy();
+
+            $overlapEnd = Carbon::parse($leave->end_date)->lessThan($periodEnd)
+                ? Carbon::parse($leave->end_date)
+                : $periodEnd->copy();
+
+            $usedDays += self::workingDaysBetween($overlapStart, $overlapEnd);
+        }
+
+        return $usedDays;
+    }
+
+    public static function workingDaysInPeriod($start, $end, Carbon $periodStart, Carbon $periodEnd): int
+    {
+        $startDate = Carbon::parse($start)->startOfDay();
+        $endDate = Carbon::parse($end)->startOfDay();
+
+        $from = $startDate->greaterThan($periodStart) ? $startDate : $periodStart->copy();
+        $to = $endDate->lessThan($periodEnd) ? $endDate : $periodEnd->copy();
+
+        if ($from->gt($to)) {
+            return 0;
+        }
+
+        return self::workingDaysBetween($from, $to);
+    }
+
     private static function overlapDaysWithYear($start, $end, $year)
     {
         $yearStart = Carbon::create($year, 1, 1)->startOfDay();
@@ -76,7 +145,7 @@ class LeaveRequest extends Model
             return 0;
         }
 
-        return $from->diffInDays($to) + 1;
+        return self::workingDaysBetween($from, $to);
     }
 
     public static function usedDaysForYear(int $employeeId, int $year, array $statuses = ['Approved']): int
@@ -104,9 +173,16 @@ class LeaveRequest extends Model
     public static function getLeaveUsage(int $employeeId, int $year = null): array
     {
         $year = $year ?? Carbon::now()->year;
+        $now = Carbon::now();
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $weekEnd = $now->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+        $monthStart = $now->copy()->startOfMonth()->startOfDay();
+        $monthEnd = $now->copy()->endOfMonth()->endOfDay();
 
         $approved = self::usedDaysForYear($employeeId, $year, ['Approved']);
         $pending = self::usedDaysForYear($employeeId, $year, ['Pending']);
+        $weekUsed = self::periodUsage($employeeId, $weekStart, $weekEnd);
+        $monthUsed = self::periodUsage($employeeId, $monthStart, $monthEnd);
 
         $totalUsed = $approved + $pending;
         $allowance = self::annualAllowance();
@@ -118,8 +194,16 @@ class LeaveRequest extends Model
             'pending' => $pending,
             'used' => $totalUsed,
             'remaining' => $remaining,
-            'per_month' => round($allowance / 12, 2),
-            'per_week' => round($allowance / 52, 2),
+            'weekly_quota' => self::weeklyQuota(),
+            'monthly_quota' => self::monthlyQuota(),
+            'weekly_used' => $weekUsed,
+            'monthly_used' => $monthUsed,
+            'weekly_remaining' => max(0, self::weeklyQuota() - $weekUsed),
+            'monthly_remaining' => max(0, self::monthlyQuota() - $monthUsed),
+            'current_week_start' => $weekStart,
+            'current_week_end' => $weekEnd,
+            'current_month_start' => $monthStart,
+            'current_month_end' => $monthEnd,
         ];
     }
 }

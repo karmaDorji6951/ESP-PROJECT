@@ -4,15 +4,28 @@
 @section('page_title', 'Attendance Records')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+<div class="app-page-hero d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
     <div>
-        <h1 class="h3 mb-1">Attendance Records</h1>
-        <p class="text-muted mb-0">Track daily attendance entries for your team</p>
+        <div class="app-page-hero-kicker mb-2">Supervisor Workspace</div>
+        <h1 class="app-page-hero-title mb-2">Attendance Records</h1>
+        <p class="app-page-hero-subtitle">Track daily attendance entries for your team.</p>
     </div>
-    <a href="{{ route('supervisor.attendance.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Mark Attendance
-    </a>
+    @if($todayAttendanceMarked ?? false)
+        <button type="button" class="btn btn-light app-page-hero-action" disabled>
+            <i class="bi bi-check2-circle"></i> Attendance Marked Today
+        </button>
+    @else
+        <a href="{{ route('supervisor.attendance.create') }}" class="btn btn-light app-page-hero-action">
+            <i class="bi bi-plus-circle"></i> Mark Attendance
+        </a>
+    @endif
 </div>
+
+@if($todayAttendanceMarked ?? false)
+    <div class="alert alert-info">
+        Attendance has already been marked for today. A supervisor cannot mark attendance twice for the same day.
+    </div>
+@endif
 
 <div class="nav nav-pills gap-2 mb-3" role="tablist">
     <a class="nav-link {{ empty($status) ? 'active' : '' }}" href="{{ route('supervisor.attendance.index', array_merge(request()->except('status', 'page'), [])) }}">All</a>
@@ -22,7 +35,7 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-4 col-md-4">
         <div class="card card-soft h-100 border-start border-3 border-success">
             <div class="card-body">
                 <div class="h4 mb-0 text-success">{{ $summary['present'] ?? 0 }}</div>
@@ -30,7 +43,7 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-4 col-md-4">
         <div class="card card-soft h-100 border-start border-3 border-danger">
             <div class="card-body">
                 <div class="h4 mb-0 text-danger">{{ $summary['absent'] ?? 0 }}</div>
@@ -38,19 +51,11 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-4 col-md-4">
         <div class="card card-soft h-100 border-start border-3 border-info">
             <div class="card-body">
                 <div class="h4 mb-0 text-info">{{ $summary['leave'] ?? 0 }}</div>
                 <div class="text-muted">On Leave</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card card-soft h-100">
-            <div class="card-body">
-                <div class="h4 mb-0">{{ ($summary['present'] ?? 0) + ($summary['absent'] ?? 0) + ($summary['leave'] ?? 0) }}</div>
-                <div class="text-muted">Total</div>
             </div>
         </div>
     </div>

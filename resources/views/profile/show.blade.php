@@ -9,8 +9,8 @@
         <div class="profile-avatar">
             <div class="avatar-upload-container">
                 <div class="avatar-circle" style="width: 160px; height: 160px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); display: flex; align-items: center; justify-content: center; border: 3px solid #06b6d4; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.2); position: relative;">
-                    @if($user->photo_path)
-                        <img src="{{ asset('storage/' . $user->photo_path) }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    @if($user->photo_url)
+                        <img src="{{ $user->photo_url }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
                     @else
                         <div style="text-align: center; color: #0369a1;">
                             <div style="font-size: 64px; font-weight: bold; line-height: 1;">{{ strtoupper(substr($user->name, 0, 2)) }}</div>
@@ -79,8 +79,14 @@
                             <value>{{ $user->employee->role_title ?? 'Not provided' }}</value>
                         </div>
                         <div class="info-item">
-                            <label>Department</label>
-                            <value>{{ $user->employee->department ?? 'Not provided' }}</value>
+                            <label>Building / Area</label>
+                            <value>
+                                @if($user->employee?->building && $user->employee?->area)
+                                    {{ $user->employee->building }} / {{ $user->employee->area }}
+                                @else
+                                    {{ $user->employee->area ?? 'Not provided' }}
+                                @endif
+                            </value>
                         </div>
                         <div class="info-item">
                             <label>Dzongkhag</label>
@@ -829,7 +835,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
                     }
                 })
                 .then(response => response.json())
@@ -838,7 +845,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Reload page to show new photo
                         window.location.reload();
                     } else {
-                        alert(data.message || 'Error uploading photo. Please try again.');
+                        const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
+                        alert(firstError || data.message || 'Error uploading photo. Please try again.');
                         // Reset overlay
                         avatarOverlay.innerHTML = `
                             <div class="upload-icon">

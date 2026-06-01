@@ -1,19 +1,19 @@
 @extends('layouts.app')
 
-@section('page_title', 'Timetable')
-@section('topbar_title', 'Timetable Schedule')
+@section('page_title', 'Schedule')
+@section('topbar_title', 'Schedule')
 
 @section('content')
 <div class="timetable-container">
-    <!-- Header with View Controls -->
-    <div class="timetable-header">
-        <div class="header-left">
-            <h1>Timetable Schedule</h1>
-            <p class="text-muted">Manage and view scheduled tasks and activities</p>
-        </div>
-        <div class="header-right">
+    <div class="app-page-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+            <div>
+                <div class="app-page-hero-kicker mb-2">Workspace</div>
+                <h1 class="app-page-hero-title mb-2">Schedule</h1>
+                <p class="app-page-hero-subtitle">Manage and view scheduled tasks and activities</p>
+            </div>
             @if($canCreate)
-                <a href="{{ route('timetables.create') }}" class="btn btn-primary">
+                <a href="{{ route('timetables.create') }}" class="btn btn-light app-page-hero-action">
                     + Add Schedule
                 </a>
             @endif
@@ -131,6 +131,7 @@ function changeDate() {
     display: flex;
     gap: 12px;
     flex-shrink: 0;
+    align-items: center;
 }
 
 .view-controls {
@@ -278,6 +279,12 @@ function changeDate() {
 
     .view-tabs,
     .date-navigation {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .header-right {
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;

@@ -3,19 +3,17 @@
 namespace App\Listeners;
 
 use App\Events\TaskAssigned;
-use App\Models\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
-class SendTaskAssignedNotification implements ShouldQueue
+class SendTaskAssignedNotification
 {
-    use InteractsWithQueue;
-
     public function handle(TaskAssigned $event): void
     {
         // Store notification in database
-        $event->task->employee->notify(
-            new \App\Notifications\TaskAssignedNotification($event->task)
-        );
+        $employee = $event->task->employee;
+        $user = $employee?->user;
+
+        if ($user) {
+            $user->notify(new \App\Notifications\TaskAssignedNotification($event->task));
+        }
     }
 }

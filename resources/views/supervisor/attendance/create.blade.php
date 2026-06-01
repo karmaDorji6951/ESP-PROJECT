@@ -7,17 +7,25 @@
 @php
     $isWeekend = ($date ?? today())->isWeekend();
     $activeTab = request('tab', 'all');
+    $isLocked = $isWeekend || ($attendanceAlreadyTaken ?? false);
 @endphp
 
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+<div class="app-page-hero d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
     <div>
-        <h1 class="h3 mb-1">Mark Attendance</h1>
-        <p class="text-muted mb-0">Mark daily attendance for employees (weekdays only)</p>
+        <div class="app-page-hero-kicker mb-2">Supervisor Workspace</div>
+        <h1 class="app-page-hero-title mb-2">Mark Attendance</h1>
+        <p class="app-page-hero-subtitle">Mark daily attendance for employees on weekdays.</p>
     </div>
-    <button type="button" class="btn btn-warning" id="markAllPresentBtn" @disabled($isWeekend)>
+    <button type="button" class="btn btn-light app-page-hero-action" id="markAllPresentBtn" @disabled($isLocked)>
         <i class="bi bi-check2-square"></i> Mark All Present
     </button>
 </div>
+
+@if($attendanceAlreadyTaken ?? false)
+    <div class="alert alert-info">
+        Attendance has already been marked for {{ ($date ?? today())->format('M d, Y') }}. You cannot mark attendance twice for the same day.
+    </div>
+@endif
 
 @if($isWeekend)
     <div class="alert alert-info">
@@ -75,7 +83,7 @@
             <div class="row g-2 align-items-end mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Attendance Date</label>
-                    <input type="date" name="attendance_date" value="{{ old('attendance_date', ($date ?? today())->format('Y-m-d')) }}" class="form-control @error('attendance_date') is-invalid @enderror" required @disabled($isWeekend)>
+                    <input type="date" name="attendance_date" value="{{ old('attendance_date', ($date ?? today())->format('Y-m-d')) }}" class="form-control @error('attendance_date') is-invalid @enderror" required @disabled($isLocked)>
                     <div class="form-text">Attendance can be marked only Monday to Friday.</div>
                     @error('attendance_date')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -83,7 +91,7 @@
                 </div>
                 <div class="col-md-8 text-md-end">
                     <a class="btn btn-outline-secondary" href="{{ route('supervisor.attendance.index') }}">View Records</a>
-                    <button class="btn btn-primary" type="submit" @disabled($isWeekend)>
+                    <button class="btn btn-primary" type="submit" @disabled($isLocked)>
                         <i class="bi bi-save"></i> Save Attendance
                     </button>
                 </div>
@@ -95,7 +103,7 @@
                         <tr>
                             <th style="width:36px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
                             <th>Staff Member</th>
-                            <th>Department</th>
+                            <th>Area</th>
                             <th>Status</th>
                             <th style="min-width:260px;">Remarks</th>
                         </tr>
@@ -104,11 +112,18 @@
                         @foreach($employees as $employee)
                             @php
                                 $existing = $todayRecords[$employee->id] ?? null;
-                                $defaultStatus = old('statuses.' . $employee->id, $existing->status ?? 'Present');
-                                $rowStatusKey = strtolower($defaultStatus === 'Leave' ? 'leave' : $defaultStatus);
-                                $rowStatusKey = $rowStatusKey === 'present' ? 'present' : ($rowStatusKey === 'absent' ? 'absent' : 'leave');
+                                $isAutoLeave = isset($approvedLeaves) && isset($approvedLeaves[$employee->id]);
+                                $defaultStatus = $isAutoLeave
+                                    ? 'Leave'
+                                    : old('statuses.' . $employee->id, $existing->status ?? '');
+                                $rowStatusKey = $defaultStatus === ''
+                                    ? 'unmarked'
+                                    : strtolower($defaultStatus === 'Leave' ? 'leave' : $defaultStatus);
+                                $rowStatusKey = $rowStatusKey === 'present'
+                                    ? 'present'
+                                    : ($rowStatusKey === 'absent' ? 'absent' : ($rowStatusKey === 'leave' ? 'leave' : 'unmarked'));
                             @endphp
-                            <tr class="attendance-row" data-status="{{ $rowStatusKey }}">
+                            <tr class="attendance-row" data-status="{{ $rowStatusKey }}" @if($isAutoLeave) data-locked="leave" @endif>
                                 <td>
                                     <input type="checkbox" class="form-check-input row-check">
                                     <input type="hidden" name="employee_ids[]" value="{{ $employee->id }}">
@@ -117,16 +132,23 @@
                                     <div class="fw-semibold">{{ $employee->name }}</div>
                                     <div class="text-muted small">{{ $employee->role_title }}</div>
                                 </td>
-                                <td>{{ $employee->department ?? '-' }}</td>
+                                <td>{{ $employee->area ?? '-' }}</td>
                                 <td style="min-width:160px;">
-                                    <select name="statuses[{{ $employee->id }}]" class="form-select form-select-sm status-select" @disabled($isWeekend)>
+                                    @if($isAutoLeave)
+                                        <input type="hidden" name="statuses[{{ $employee->id }}]" value="Leave">
+                                    @endif
+                                    <select name="statuses[{{ $employee->id }}]" class="form-select form-select-sm status-select" @disabled($isLocked || $isAutoLeave)>
+                                        <option value="" @selected($defaultStatus === '')>-- Select --</option>
                                         @foreach(['Present' => 'Present', 'Absent' => 'Absent', 'Leave' => 'On Leave'] as $value => $label)
                                             <option value="{{ $value }}" @selected($defaultStatus === $value)>{{ $label }}</option>
                                         @endforeach
                                     </select>
+                                    @if($isAutoLeave)
+                                        <div class="form-text text-muted">Auto: Approved leave</div>
+                                    @endif
                                 </td>
                                 <td>
-                                    <input type="text" name="remarks[{{ $employee->id }}]" value="{{ old('remarks.' . $employee->id, $existing->remarks ?? '') }}" class="form-control form-control-sm" placeholder="Remarks (optional)" @disabled($isWeekend)>
+                                    <input type="text" name="remarks[{{ $employee->id }}]" value="{{ old('remarks.' . $employee->id, $existing->remarks ?? '') }}" class="form-control form-control-sm" placeholder="Remarks (optional)" @disabled($isLocked)>
                                 </td>
                             </tr>
                         @endforeach
@@ -145,6 +167,7 @@
     const markAllPresentBtn = document.getElementById('markAllPresentBtn');
 
     function normalizeStatus(value) {
+        if (!value) return 'unmarked';
         if (value === 'Leave') return 'leave';
         if (value === 'Absent') return 'absent';
         return 'present';
@@ -202,6 +225,9 @@
             const checkedRows = rows.filter(r => (r.querySelector('.row-check')?.checked));
             const targetRows = checkedRows.length ? checkedRows : rows;
             targetRows.forEach((row) => {
+                if (row.getAttribute('data-locked') === 'leave') {
+                    return;
+                }
                 const select = row.querySelector('.status-select');
                 if (!select) return;
                 select.value = 'Present';

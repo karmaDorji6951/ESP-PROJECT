@@ -184,14 +184,13 @@ class AnalyticsController extends Controller
     
     private function getDepartmentAnalytics()
     {
-        return Employee::select('department', DB::raw('count(*) as count'))
-            ->groupBy('department')
-            ->orderBy('count', 'desc')
+        return \App\Models\Department::withCount('employees')
+            ->orderByDesc('employees_count')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($dept) {
                 return [
-                    'department' => $item->department,
-                    'employee_count' => $item->count,
+                    'department' => $dept->name,
+                    'employee_count' => $dept->employees_count,
                 ];
             });
     }

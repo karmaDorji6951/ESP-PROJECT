@@ -8,6 +8,7 @@ use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Evaluation;
 
 class SupervisorDashboardController extends Controller
 {
@@ -37,6 +38,8 @@ class SupervisorDashboardController extends Controller
             $q->where('slug', 'staff');
         })->latest()->limit(5)->get();
 
-        return view('supervisor.dashboard', compact('summary', 'recentEmployees', 'recentAttendance', 'recentTasks', 'recentLeaves', 'staffUsers'));
+        $recentEvaluations = Evaluation::with('user')->latest()->limit(5)->get();
+
+        return view('supervisor.dashboard', compact('summary', 'recentEmployees', 'recentAttendance', 'recentTasks', 'recentLeaves', 'staffUsers', 'recentEvaluations'));
     }
 }

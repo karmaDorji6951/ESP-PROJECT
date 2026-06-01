@@ -6,20 +6,21 @@
 @section('content')
 <div class="analytics-container">
     <!-- Analytics Header -->
-    <div class="analytics-header">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="analytics-header app-page-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <h2 class="fw-bold mb-1">Analytics Dashboard</h2>
-                <p class="text-muted mb-0">Comprehensive insights into your ESP management system</p>
+                <div class="app-page-hero-kicker mb-2">Admin Workspace</div>
+                <h2 class="app-page-hero-title mb-2">Analytics Dashboard</h2>
+                <p class="app-page-hero-subtitle">Comprehensive insights into your ESP management system.</p>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary" onclick="exportReport('summary', 'pdf')">
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-light app-page-hero-action" onclick="exportReport('summary', 'pdf')">
                     <i class="bi bi-file-pdf me-2"></i>Export PDF
                 </button>
-                <button class="btn btn-outline-success" onclick="exportReport('summary', 'excel')">
+                <button class="btn btn-light app-page-hero-action" onclick="exportReport('summary', 'excel')">
                     <i class="bi bi-file-excel me-2"></i>Export Excel
                 </button>
-                <button class="btn btn-primary" onclick="refreshAnalytics()">
+                <button class="btn btn-light app-page-hero-action" onclick="refreshAnalytics()">
                     <i class="bi bi-arrow-clockwise me-2"></i>Refresh
                 </button>
             </div>
@@ -122,12 +123,12 @@
             </div>
         </div>
         
-        <!-- Department Distribution -->
+        <!-- Area Distribution -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 pt-4">
-                    <h5 class="card-title mb-0">Department Distribution</h5>
-                    <p class="text-muted small mb-0">Employees by department</p>
+                    <h5 class="card-title mb-0">Area Distribution</h5>
+                    <p class="text-muted small mb-0">Employees by building area</p>
                 </div>
                 <div class="card-body">
                     <canvas id="departmentChart" height="300"></canvas>
@@ -265,7 +266,7 @@
                             <thead>
                                 <tr>
                                     <th>Employee Name</th>
-                                    <th>Department</th>
+                                    <th>Area</th>
                                     <th>Performance Score</th>
                                     <th>Task Completion Rate</th>
                                     <th>Attendance Rate</th>
@@ -468,19 +469,7 @@
 }
 
 .analytics-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 24px;
-    color: white;
     margin-bottom: 24px;
-}
-
-.analytics-header h2 {
-    color: white;
-}
-
-.analytics-header p {
-    color: rgba(255, 255, 255, 0.8);
 }
 
 .card {
@@ -609,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Department Distribution Chart
+    // Area Distribution Chart
     const departmentCtx = document.getElementById('departmentChart').getContext('2d');
     const departmentData = @json($departmentAnalytics);
     

@@ -11,11 +11,11 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
     <style>
         :root {
-            --primary: #1e3a8a;
-            --primary-dark: #1e293b;
-            --primary-light: #3b82f6;
+            --primary: #0F2044; /* deep navy */
+            --primary-dark: #0b1730;
+            --primary-light: #1D9E75; /* teal accent used for active states */
             --secondary: #64748b;
-            --accent: #f8fafc;
+            --accent: #ffffff;
             --warning: #f59e0b;
             --success: #10b981;
             --danger: #ef4444;
@@ -24,6 +24,7 @@
             --light: #f1f5f9;
             --border: #e2e8f0;
             --shadow: rgba(0, 0, 0, 0.1);
+            --gradient-dashboard: linear-gradient(135deg, #0F2044 0%, #173b6b 60%, #1D9E75 160%);
             --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             --gradient-secondary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 
@@ -71,12 +72,37 @@
             top: 0;
             height: 100vh;
             width: 280px;
-            background: var(--gradient-primary);
+            background: var(--gradient-dashboard);
             padding: 24px 20px !important;
             box-shadow: 0 4px 24px var(--shadow);
             overflow-y: auto;
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            color: #ffffff;
+        }
+
+        /* Mobile off-canvas behavior */
+        .sidebar.mobile-hidden {
+            transform: translateX(-110%);
+            transition: transform 0.28s ease;
+            will-change: transform;
+        }
+
+        .sidebar.mobile-open {
+            transform: translateX(0) !important;
+            transition: transform 0.28s ease;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 900;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-backdrop.show {
+            display: block;
         }
 
         .sidebar .brand {
@@ -105,7 +131,7 @@
         }
 
         .sidebar a {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -117,6 +143,13 @@
             margin-bottom: 8px;
             font-size: 14px;
             border: 1px solid transparent;
+            min-width: 0;
+        }
+
+        .sidebar a span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .sidebar a:hover {
@@ -127,11 +160,11 @@
         }
 
         .sidebar a.active {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
             color: white;
             border-left: 4px solid var(--primary-light);
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         }
 
         .sidebar a i {
@@ -152,6 +185,17 @@
             right: 0;
             z-index: 1000;
             width: 100%;
+        }
+
+        /* Mobile header toggle button spacing */
+        .mobile-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 18px;
         }
 
         header h5 {
@@ -177,6 +221,7 @@
             width: 100%;
             padding: 0 24px;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
@@ -184,14 +229,101 @@
 
         .app-header-meta {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
         }
 
         .app-header-actions {
             display: flex;
             align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
             gap: 8px;
+            white-space: nowrap;
+        }
+
+        header h5, header small { overflow: hidden; text-overflow: ellipsis; }
+
+        .notification-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: inline-block;
+            box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.12);
+            position: absolute;
+            top: 6px;
+            right: 6px;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 24px;
+            right: 24px;
+        }
+
+        /* Ensure sidebar content doesn't get hidden behind the footer */
+        .sidebar { padding-bottom: 140px; }
+
+        .profile-card-link {
+            display: block;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            color: inherit;
+            text-decoration: none;
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .profile-card-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(29, 158, 117, 0.65);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .profile-card-link:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.25), 0 8px 20px rgba(0, 0, 0, 0.18);
+        }
+
+        .profile-card-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-card-copy {
+            flex: 1;
+            min-width: 0;
+            color: white;
+        }
+
+        .profile-card-name {
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-card-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-card-arrow {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 18px;
             flex-shrink: 0;
         }
 
@@ -343,6 +475,67 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        /* Uniform in-page header styling (used by Schedule / My Tasks / Leave, etc.) */
+        .app-page-hero {
+            background: var(--gradient-dashboard);
+            color: #ffffff;
+            border-radius: 18px;
+            padding: 22px 26px;
+            box-shadow: 0 18px 40px var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .app-page-hero::after {
+            content: '';
+            position: absolute;
+            inset: auto -120px -120px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-page-hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-page-hero-kicker {
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        .app-page-hero-title {
+            font-weight: 800;
+            font-size: clamp(1.6rem, 2.5vw, 2.35rem);
+            margin: 0;
+        }
+
+        .app-page-hero-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            max-width: 760px;
+        }
+
+        .app-page-hero-action {
+            border-radius: 999px;
+            padding-inline: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-page-hero-action:hover {
+            color: var(--primary);
         }
 
         /* Center cards in main content */
@@ -814,9 +1007,11 @@
 
         @media (max-width: 992px) {
             .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
+                position: fixed;
+                width: 280px;
+                height: 100vh;
+                top: 0;
+                left: 0;
                 padding: 16px !important;
             }
             
@@ -828,6 +1023,7 @@
             main {
                 margin-left: 0;
                 min-height: auto;
+                width: 100%;
             }
             
             main > .p-4 {
@@ -842,11 +1038,33 @@
             .app-header-inner {
                 padding: 0 16px;
             }
+
+            /* show collapsed sidebar by default on small screens */
+            .sidebar.mobile-hidden {
+                transform: translateX(-110%);
+            }
+            /* Make sidebar footer flow with content on small screens to avoid overlap */
+            .sidebar-footer {
+                position: relative !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(255,255,255,0.06);
+            }
+            .sidebar { padding-bottom: 30px; }
+
+            .app-header-inner {
+                padding: 0 16px;
+            }
         }
 
         @media (max-width: 768px) {
             .sidebar {
+                width: min(88vw, 320px);
                 padding: 12px !important;
+                border-right: 1px solid rgba(255, 255, 255, 0.08);
             }
             
             .sidebar h4 {
@@ -854,13 +1072,14 @@
             }
             
             .sidebar a {
-                padding: 10px 12px;
-                font-size: 13px;
+                padding: 12px 14px;
+                font-size: 14px;
+                min-height: 44px;
             }
             
             .sidebar a i {
-                font-size: 14px;
-                width: 18px;
+                font-size: 15px;
+                width: 20px;
             }
             
             header {
@@ -872,24 +1091,98 @@
             }
             
             header h5 {
-                font-size: 16px;
+                font-size: 15px;
             }
             
             header small {
-                font-size: 12px;
+                font-size: 11px;
             }
             
             main > .p-4 {
-                padding: 80px 16px 16px 16px !important;
+                padding: 74px 12px 14px 12px !important;
             }
             
             .card-body {
-                padding: 16px;
+                padding: 14px;
             }
             
             .btn {
-                padding: 6px 12px;
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            /* Place profile card inline below navigation on small screens */
+            .sidebar-footer {
+                position: relative !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .profile-card-link {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px;
+                padding: 10px 12px !important;
+                border-radius: 10px !important;
+                box-shadow: none !important;
+                transform: none !important;
+                background: rgba(255,255,255,0.03) !important;
+                margin: 0;
+            }
+
+            .profile-card-content { gap: 10px; }
+
+            .profile-card-name { white-space: normal; overflow: visible; text-overflow: unset; }
+
+            .sidebar { padding-bottom: 24px; }
+        }
+
+        @media (max-width: 576px) {
+            header {
+                padding: 8px 10px !important;
+            }
+
+            .app-header-inner {
+                padding: 0 10px;
+                gap: 10px;
+            }
+
+            .app-header-meta {
+                gap: 8px;
+            }
+
+            .app-header-actions {
+                gap: 6px;
+            }
+
+            .mobile-toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+            main > .p-4 {
+                padding: 70px 10px 12px 10px !important;
+            }
+
+            .sidebar a {
+                padding: 12px;
                 font-size: 13px;
+            }
+
+            .profile-card-link {
+                padding: 10px 11px !important;
+            }
+
+            .profile-card-name {
+                font-size: 13px;
+            }
+
+            .profile-card-meta {
+                font-size: 11px;
             }
         }
 
@@ -922,13 +1215,23 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary);
         }
+        /* Stackable table helper: converts wide tables into vertical cards on small screens */
+        .stackable-table thead { }
+        @media (max-width: 640px) {
+            .stackable-table thead { display: none; }
+            .stackable-table, .stackable-table tbody, .stackable-table tr, .stackable-table td { display: block; width: 100%; }
+            .stackable-table tr { margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+            .stackable-table td { padding: 8px 0; display: flex; justify-content: space-between; align-items: center; }
+            .stackable-table td::before { content: attr(data-label); font-weight: 700; color: var(--text-secondary); margin-right: 12px; flex: 0 0 45%; }
+            .stackable-table td > * { flex: 1 1 auto; text-align: right; }
+        }
     </style>
     @stack('styles')
 </head>
 <body>
 <div class="container-fluid">
     <div class="row" style="margin: 0;">
-        <aside class="sidebar">
+        <aside class="sidebar mobile-hidden" id="sidebar">
             <div class="brand">
                 <h4 class="fw-bold mb-0">PMS for ESP</h4>
                 <small>Elementary Service Personnel</small>
@@ -939,81 +1242,149 @@
                     $role = $role !== '' ? strtolower($role) : strtolower(trim((string) optional(auth()->user()?->role)->name));
                 @endphp
 
-                @if($role === 'admin')
-                    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                        <i class="bi bi-people"></i> Users
-                    </a>
-                    <a href="{{ route('admin.employees.index') }}" class="{{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
-                        <i class="bi bi-person-badge"></i> Employees
-                    </a>
-                    <a href="{{ route('admin.leaves.index') }}" class="{{ request()->routeIs('admin.leaves.*') ? 'active' : '' }}">
-                        <i class="bi bi-calendar-check"></i> Leave Management
-                    </a>
-                    <a href="{{ route('admin.analytics.index') }}" class="{{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
-                        <i class="bi bi-graph-up"></i> Analytics
-                    </a>
-                    <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                        <i class="bi bi-file-earmark"></i> Reports
-                    </a>
-                @elseif($role === 'supervisor')
-                    <a href="{{ route('supervisor.dashboard') }}" class="{{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{{ route('supervisor.attendance.index') }}" class="{{ request()->routeIs('supervisor.attendance.*') ? 'active' : '' }}">
-                        <i class="bi bi-clipboard-check"></i> Attendance
-                    </a>
-                    <a href="{{ route('supervisor.tasks.index') }}" class="{{ request()->routeIs('supervisor.tasks.*') ? 'active' : '' }}">
-                        <i class="bi bi-list-task"></i> Tasks
-                    </a>
-                    <a href="{{ route('supervisor.reports.index') }}" class="{{ request()->routeIs('supervisor.reports.*') ? 'active' : '' }}">
-                        <i class="bi bi-file-earmark"></i> Reports
-                    </a>
-                    <a href="{{ route('supervisor.leaves.index') }}" class="{{ request()->routeIs('supervisor.leaves.*') ? 'active' : '' }}">
-                        <i class="bi bi-calendar-check"></i> Leave Requests
-                        @php
-                            $authUser = auth()->user();
-                            $unreadLeaveRequestNotificationsCount = $authUser
-                                ? $authUser->unreadNotifications()->where('data->type', 'leave_request')->count()
-                                : 0;
-                        @endphp
-                        @if($unreadLeaveRequestNotificationsCount > 0)
-                            <span class="badge bg-danger ms-auto">{{ $unreadLeaveRequestNotificationsCount }}</span>
-                        @endif
-                    </a>
-                @elseif($role === 'staff')
-                    <a href="{{ route('staff.dashboard') }}" class="{{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{{ route('staff.tasks.index') }}" class="{{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
-                        <i class="bi bi-list-task"></i> My Tasks
-                    </a>
-                    <a href="{{ route('staff.leaves.index') }}" class="{{ request()->routeIs('staff.leaves.*') ? 'active' : '' }}">
-                        <i class="bi bi-calendar-plus"></i> Leaves
-                    </a>
-                @endif
-                <a href="{{ route('timetables.index') }}" class="{{ request()->routeIs('timetables.*') ? 'active' : '' }}">
-                    <i class="bi bi-calendar3"></i> Timetable
-                </a>
-                <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-                    <i class="bi bi-bell"></i> Notifications
-                    @if(auth()->user()->unreadNotifications()->count() > 0)
-                        <span class="badge bg-danger ms-auto">{{ auth()->user()->unreadNotifications()->count() }}</span>
+                <div class="nav-section">
+                    <div class="nav-section-title" style="color: rgba(255,255,255,0.85); font-weight:600; margin:8px 0 6px;">Main</div>
+                    @if($role === 'admin')
+                        <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    @elseif($role === 'supervisor')
+                        <a href="{{ route('supervisor.dashboard') }}" class="{{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('staff.dashboard') }}" class="{{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
                     @endif
-                </a>
-                <a href="{{ route('profile.show') }}" class="{{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                    <i class="bi bi-person-circle"></i> Profile
-                </a>
+                    <a href="{{ route('timetables.index') }}" class="{{ request()->routeIs('timetables.*') ? 'active' : '' }}">
+                        <i class="bi bi-calendar3"></i> Schedule
+                    </a>
+                    <a href="{{ route('feedback.index') }}" class="{{ request()->routeIs('feedback.*') ? 'active' : '' }}">
+                        <i class="bi bi-chat-left-text"></i> Feedback
+                    </a>
+                </div>
+
+                <div class="nav-section" style="margin-top:12px;">
+                    <div class="nav-section-title" style="color: rgba(255,255,255,0.85); font-weight:600; margin:8px 0 6px;">Management</div>
+                    @if($role === 'admin')
+                        <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                        <a href="{{ route('admin.employees.index') }}" class="{{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
+                            <i class="bi bi-person-badge"></i> Employees
+                        </a>
+                        <a href="{{ route('admin.leaves.index') }}" class="{{ request()->routeIs('admin.leaves.*') ? 'active' : '' }}">
+                            <i class="bi bi-calendar-check"></i> Leave Management
+                        </a>
+                        <a href="{{ route('evaluations.index') }}" class="{{ request()->routeIs('evaluations.index') ? 'active' : '' }}">
+                            <i class="bi bi-journal-check"></i> Reviewed
+                        </a>
+                        <a href="{{ route('evaluations.create') }}" class="{{ request()->routeIs('evaluations.create') ? 'active' : '' }}">
+                            <i class="bi bi-pencil-square"></i> Evaluations
+                        </a>
+                        <a href="{{ route('admin.analytics.index') }}" class="{{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                        <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                            <i class="bi bi-file-earmark"></i> Reports
+                        </a>
+                    @endif
+
+                    @if($role === 'supervisor')
+                        @php
+                            $employeeCountForAttendanceNav = \App\Models\Employee::query()->count();
+                            $markedCountForAttendanceNav = $employeeCountForAttendanceNav > 0
+                                ? \App\Models\Attendance::query()
+                                    ->whereDate('attendance_date', today()->toDateString())
+                                    ->distinct('employee_id')
+                                    ->count('employee_id')
+                                : 0;
+                            $attendanceMarkedTodayForNav = $employeeCountForAttendanceNav > 0
+                                && $markedCountForAttendanceNav >= $employeeCountForAttendanceNav;
+                        @endphp
+                        <a href="{{ route('supervisor.attendance.index') }}" class="{{ request()->routeIs('supervisor.attendance.*') ? 'active' : '' }}">
+                            <i class="bi bi-clipboard-check"></i> Attendance
+                            @if($attendanceMarkedTodayForNav)
+                                <span class="badge bg-success ms-auto">Done</span>
+                            @endif
+                        </a>
+                        <a href="{{ route('supervisor.tasks.index') }}" class="{{ request()->routeIs('supervisor.tasks.*') ? 'active' : '' }}">
+                            <i class="bi bi-list-task"></i> Tasks
+                        </a>
+                        <a href="{{ route('evaluations.index') }}" class="{{ request()->routeIs('evaluations.index') ? 'active' : '' }}">
+                            <i class="bi bi-journal-check"></i> Reviewed
+                        </a>
+                        <a href="{{ route('evaluations.create') }}" class="{{ request()->routeIs('evaluations.create') ? 'active' : '' }}">
+                            <i class="bi bi-pencil-square"></i> Evaluations
+                        </a>
+                        <a href="{{ route('supervisor.reports.index') }}" class="{{ request()->routeIs('supervisor.reports.*') ? 'active' : '' }}">
+                            <i class="bi bi-file-earmark"></i> Reports
+                        </a>
+                        <a href="{{ route('supervisor.leaves.index') }}" class="{{ request()->routeIs('supervisor.leaves.*') ? 'active' : '' }}">
+                            <i class="bi bi-calendar-check"></i> Leave Requests
+                            @php
+                                $authUser = auth()->user();
+                                $unreadLeaveRequestNotificationsCount = $authUser
+                                    ? $authUser->unreadNotifications()->where('data->type', 'leave_request')->count()
+                                    : 0;
+                            @endphp
+                            @if($unreadLeaveRequestNotificationsCount > 0)
+                                <span class="badge bg-danger ms-auto">{{ $unreadLeaveRequestNotificationsCount }}</span>
+                            @endif
+                        </a>
+                    @endif
+
+                    @if($role === 'staff')
+                        <a href="{{ route('staff.tasks.index') }}" class="{{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
+                            <i class="bi bi-list-task"></i> My Tasks
+                        </a>
+                        <a href="{{ route('staff.evaluations.index') }}" class="{{ request()->routeIs('staff.evaluations.*') ? 'active' : '' }}">
+                            <i class="bi bi-journal-check"></i> Reviewed
+                        </a>
+                        <a href="{{ route('staff.leaves.index') }}" class="{{ request()->routeIs('staff.leaves.*') ? 'active' : '' }}">
+                            <i class="bi bi-calendar-plus"></i> Leaves
+                        </a>
+                    @endif
+                </div>
+
                             </nav>
+
+            <div class="sidebar-footer">
+                @if(auth()->check())
+                    @php
+                        $user = auth()->user();
+                        $initials = collect(explode(' ', trim($user->name)))->filter()->map(fn($p) => strtoupper(substr($p,0,1)))->take(2)->join('');
+                    @endphp
+                    <a href="{{ route('profile.show') }}" class="profile-card-link">
+                        <div class="profile-card-content">
+                            <div style="width:44px; height:44px; border-radius:50%; background: var(--primary-light); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0;">{{ $initials }}</div>
+                            <div class="profile-card-copy">
+                                <div class="profile-card-name">{{ $user->name }}</div>
+                                <div class="profile-card-meta">{{ $user->role?->name ?? '' }} • Profile</div>
+                            </div>
+                            <i class="bi bi-chevron-right profile-card-arrow"></i>
+                        </div>
+                    </a>
+                    <div style="display:flex; align-items:center; justify-content:flex-end; margin-top:10px;">
+                        <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                            @csrf
+                            <button type="submit" class="btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.08); color: white; padding:6px 8px; border-radius:8px;">Logout</button>
+                        </form>
+                    </div>
+                @endif
+            </div>
         </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()" aria-hidden="true"></div>
         <main class="p-0">
             <header>
                 <div class="app-header-inner">
+                        <button class="btn btn-outline-secondary mobile-toggle d-lg-none me-2" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+                            <i class="bi bi-list"></i>
+                        </button>
                     <div class="app-header-meta">
                         <h5 class="mb-0">@yield('page_title', 'PMS for ESP')</h5>
-                        <small>{{ auth()->user()?->role?->name ?? 'Guest' }}</small>
+                        <small class="text-muted">{{ auth()->user()?->role?->name ?? 'Guest' }} • {{ now()->format('F j, Y') }}</small>
                     </div>
                     <div class="app-header-actions">
                         @auth
@@ -1021,9 +1392,7 @@
                                 <button class="btn position-relative p-2" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
                                     <i class="bi bi-bell fs-5"></i>
                                     @if(auth()->user()->unreadNotifications()->count() > 0)
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            {{ auth()->user()->unreadNotifications()->count() }}
-                                        </span>
+                                        <span class="notification-dot" aria-hidden="true"></span>
                                     @endif
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" style="min-width: 320px; max-height: 400px; overflow-y: auto;" aria-labelledby="notificationDropdown">
@@ -1071,12 +1440,6 @@
                                     @endif
                                 </ul>
                             </div>
-                            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                                @csrf
-                                <button class="btn btn-danger" style="font-weight: 500; padding: 8px 16px;">
-                                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                                </button>
-                            </form>
                         @endauth
                     </div>
                 </div>
@@ -1135,5 +1498,61 @@ function markAllNotificationsAsRead() {
         console.error('Error marking notifications as read:', error);
     });
 }
+
+// Mobile sidebar toggle behavior
+(function(){
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebarToggle');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    if(!sidebar || !toggle || !backdrop) return;
+
+    function openSidebar() {
+        sidebar.classList.add('mobile-open');
+        sidebar.classList.remove('mobile-hidden');
+        backdrop.classList.add('show');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        sidebar.classList.add('mobile-hidden');
+        backdrop.classList.remove('show');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+
+    // Expose close for inline onclick
+    window.closeSidebar = closeSidebar;
+
+    toggle.addEventListener('click', function(e){
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        if(expanded) closeSidebar(); else openSidebar();
+    });
+
+    backdrop.addEventListener('click', closeSidebar);
+
+    // Close on ESC
+    document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape') closeSidebar();
+    });
+
+    // Ensure sidebar is visible on large screens
+    function handleResize(){
+        if(window.innerWidth >= 992){
+            sidebar.classList.remove('mobile-hidden');
+            sidebar.classList.remove('mobile-open');
+            backdrop.classList.remove('show');
+            toggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        } else {
+            sidebar.classList.add('mobile-hidden');
+        }
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+})();
 </script>
 </html>

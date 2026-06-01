@@ -4,12 +4,14 @@
 @section('page_title', 'My Tasks')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All My Tasks</h5>
-            <a href="{{ route('staff.dashboard') }}" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+<div class="app-page-hero mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+        <div>
+            <div class="app-page-hero-kicker mb-2">Staff Workspace</div>
+            <h1 class="app-page-hero-title mb-2">My Tasks</h1>
+            <p class="app-page-hero-subtitle">Track assigned work, deadlines, and submission status.</p>
         </div>
+        <a href="{{ route('staff.dashboard') }}" class="btn btn-light app-page-hero-action">Back to Dashboard</a>
     </div>
 </div>
 
@@ -18,10 +20,12 @@
         <table class="table mb-0">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Task Title</th>
                     <th>Description</th>
                     <th>Status</th>
                     <th>Deadline</th>
+                    <th>Due</th>
                     <th>Priority</th>
                     <th>Action</th>
                 </tr>
@@ -29,6 +33,11 @@
             <tbody>
                 @forelse($tasks as $task)
                     <tr>
+                        <td class="align-middle">
+                            <div class="table-avatar">
+                                <div class="user-avatar">{{ strtoupper(substr(optional($task->assigner)->name ?? auth()->user()->name, 0, 1)) }}</div>
+                            </div>
+                        </td>
                         <td class="fw-semibold">{{ $task->title }}</td>
                         <td>
                             <small class="text-muted">{{ Str::limit($task->description, 50) }}</small>
@@ -42,6 +51,17 @@
                             </span>
                         </td>
                         <td><small>{{ $task->deadline?->format('Y-m-d') ?? '-' }}</small></td>
+                        <td class="align-middle"><small>
+                            @if($task->deadline)
+                                @if(\Carbon\Carbon::now()->gt($task->deadline) && $task->status !== 'Completed')
+                                    <span class="text-danger">Overdue</span>
+                                @else
+                                    {{ $task->deadline->diffForHumans() }}
+                                @endif
+                            @else
+                                -
+                            @endif
+                        </small></td>
                         <td>
                             <span class="badge {{ 
                                 $task->priority === 'High' ? 'bg-danger' : 
@@ -63,7 +83,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="8" class="text-center text-muted py-4">
                             <div class="mb-2">📭 No tasks assigned yet</div>
                             <small>Check back later for new task assignments</small>
                         </td>

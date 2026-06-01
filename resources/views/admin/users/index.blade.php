@@ -4,13 +4,13 @@
 @section('page_title', 'Users Management')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All Users</h5>
-            <a href="{{ route('admin.users.create') }}" class="btn btn-success btn-sm">Create New User</a>
-        </div>
+<div class="app-page-hero d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <div class="app-page-hero-kicker mb-2">Admin Workspace</div>
+        <h1 class="app-page-hero-title mb-2">Users Management</h1>
+        <p class="app-page-hero-subtitle">Manage system accounts, roles, and employee links.</p>
     </div>
+    <a href="{{ route('admin.users.create') }}" class="btn btn-light app-page-hero-action">Create New User</a>
 </div>
 
 @if(session('success'))

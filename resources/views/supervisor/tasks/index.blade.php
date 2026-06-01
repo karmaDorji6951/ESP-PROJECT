@@ -6,12 +6,13 @@
 @section('content')
 <div class="tasks-page">
     <!-- Header with Create Button -->
-    <div class="content-header mb-4">
-        <div class="header-title">
-            <h1>Assigned Tasks</h1>
-            <p class="text-muted mb-0">Manage and track tasks assigned to your team</p>
+    <div class="app-page-hero d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <div class="app-page-hero-kicker mb-2">Supervisor Workspace</div>
+            <h1 class="app-page-hero-title mb-2">Assigned Tasks</h1>
+            <p class="app-page-hero-subtitle">Manage and track tasks assigned to your team.</p>
         </div>
-        <a href="{{ route('supervisor.tasks.create') }}" class="btn btn-primary">
+        <a href="{{ route('supervisor.tasks.create') }}" class="btn btn-light app-page-hero-action">
             + Assign New Task
         </a>
     </div>
@@ -34,6 +35,7 @@
                         <th>Task Title</th>
                         <th>Status</th>
                         <th>Deadline</th>
+                        <th>Due</th>
                         <th>Assigned Date</th>
                         <th>Actions</th>
                     </tr>
@@ -73,12 +75,30 @@
                                 <span class="text-muted">No deadline</span>
                             @endif
                         </td>
+                        <td class="deadline-cell">
+                            @if($task->deadline)
+                                @if(\Carbon\Carbon::now()->gt($task->deadline) && $task->status !== 'Completed')
+                                    <span class="text-danger">Overdue</span>
+                                @else
+                                    {{ $task->deadline->diffForHumans() }}
+                                @endif
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
                         <td class="date-cell">
                             {{ $task->created_at->format('M d, Y') }}
                         </td>
                         <td class="actions-cell">
                             <a href="{{ route('supervisor.tasks.show', $task) }}" class="action-btn btn-view" title="View">👁</a>
                             <a href="{{ route('supervisor.tasks.edit', $task) }}" class="action-btn btn-edit" title="Edit">✎</a>
+                            @if($task->status === 'Completed' && $task->latestSubmission)
+                                @if($task->evaluation)
+                                    <a href="{{ route('supervisor.tasks.evaluation.create', $task) }}" class="action-btn btn-evaluate" title="Evaluated">✓</a>
+                                @else
+                                    <a href="{{ route('supervisor.tasks.evaluation.create', $task) }}" class="action-btn btn-evaluate" title="Evaluate">📝</a>
+                                @endif
+                            @endif
                             <form action="{{ route('supervisor.tasks.destroy', $task) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
                                 @csrf
                                 @method('DELETE')

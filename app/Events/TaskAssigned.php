@@ -22,8 +22,15 @@ class TaskAssigned implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
+        $userId = $this->task->employee?->user?->id;
+
+        if (! $userId) {
+            return [];
+        }
+
         return [
-            new PrivateChannel('user.' . $this->task->employee_id),
+            // UI subscribes to: private-user.{authUserId}
+            new PrivateChannel('user.' . $userId),
         ];
     }
 

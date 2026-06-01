@@ -9,11 +9,12 @@
         $teamEmployees = $teamEmployees ?? collect();
     @endphp
     <!-- Reports Header -->
-    <div class="reports-header">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="reports-header app-page-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <h2 class="fw-bold mb-1">Report</h2>
-                <p class="text-muted mb-0">Generate comprehensive reports for your team</p>
+                <div class="app-page-hero-kicker mb-2">Supervisor Workspace</div>
+                <h2 class="app-page-hero-title mb-2">Report</h2>
+                <p class="app-page-hero-subtitle">Generate comprehensive reports for your team.</p>
             </div>
         </div>
     </div>
@@ -241,19 +242,7 @@
 }
 
 .reports-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 24px;
-    color: white;
     margin-bottom: 24px;
-}
-
-.reports-header h2 {
-    color: white;
-}
-
-.reports-header p {
-    color: rgba(255, 255, 255, 0.8);
 }
 
 .quick-reports-grid {
@@ -278,7 +267,7 @@
 .quick-report-icon {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-dashboard);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -307,7 +296,7 @@
     font-size: 20px;
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-dashboard);
     color: #f5f1e8;
     border-radius: 50%;
     display: flex;
@@ -461,7 +450,7 @@ function showPreview() {
                     <thead>
                         <tr>
                             <th>Member</th>
-                            <th>Department</th>
+                            <th>Area</th>
                             <th>Period</th>
                             <th>Status</th>
                         </tr>
@@ -469,13 +458,13 @@ function showPreview() {
                     <tbody>
                         <tr>
                             <td>John Doe</td>
-                            <td>IT</td>
+                            <td>Block 1 - Corridor</td>
                             <td>May 2026</td>
                             <td><span class="badge bg-success">Present</span></td>
                         </tr>
                         <tr>
                             <td>Jane Smith</td>
-                            <td>HR</td>
+                            <td>Block 2 - Parking</td>
                             <td>May 2026</td>
                             <td><span class="badge bg-warning">Leave</span></td>
                         </tr>

@@ -4,13 +4,13 @@
 @section('page_title', 'Employees Management')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All Employees</h5>
-            <a href="{{ route('admin.employees.create') }}" class="btn btn-success btn-sm">Add New Employee</a>
-        </div>
+<div class="app-page-hero d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <div class="app-page-hero-kicker mb-2">Admin Workspace</div>
+        <h1 class="app-page-hero-title mb-2">Employees Management</h1>
+        <p class="app-page-hero-subtitle">Manage assigned staff by building and area.</p>
     </div>
+    <a href="{{ route('admin.employees.create') }}" class="btn btn-light app-page-hero-action">Add New Employee</a>
 </div>
 
 @if(session('success'))
@@ -27,7 +27,9 @@
                 <tr>
                     <th>Name</th>
                     <th>CID</th>
-                    <th>Role Title</th>
+                    <th>Building</th>
+                    <th>Area</th>
+                    <th>Assigned Staff</th>
                     <th>Phone</th>
                     <th>Joining Date</th>
                     <th>Status</th>
@@ -39,6 +41,8 @@
                     <tr>
                         <td class="fw-semibold">{{ $employee->name }}</td>
                         <td><small>{{ $employee->cid }}</small></td>
+                        <td>{{ $employee->building ?? '-' }}</td>
+                        <td>{{ $employee->area ?? '-' }}</td>
                         <td>{{ $employee->role_title }}</td>
                         <td>{{ $employee->phone ?? '-' }}</td>
                         <td><small>{{ $employee->joining_date?->format('Y-m-d') ?? '-' }}</small></td>
@@ -60,7 +64,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="9" class="text-center text-muted py-4">
                             <div class="mb-2">👥 No employees found</div>
                             <small><a href="{{ route('admin.employees.create') }}">Click here to add a new employee</a></small>
                         </td>
